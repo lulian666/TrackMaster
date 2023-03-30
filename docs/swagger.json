@@ -1,0 +1,142 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "TrackMaster",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/v1/projects": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "project"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SwaggerProjects"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sync-projects": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "project"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.SwaggerProject": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "createAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 2
+                },
+                "updateAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SwaggerProjects": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SwaggerProject"
+                    }
+                },
+                "pager": {
+                    "$ref": "#/definitions/pkg.Pager"
+                }
+            }
+        },
+        "pkg.Error": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "pkg.Pager": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total_rows": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}
