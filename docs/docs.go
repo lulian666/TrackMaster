@@ -315,10 +315,10 @@ const docTemplate = `{
                 "page": {
                     "type": "integer"
                 },
-                "page_size": {
+                "pageSize": {
                     "type": "integer"
                 },
-                "total_rows": {
+                "totalRow": {
                     "type": "integer"
                 }
             }
