@@ -11,6 +11,7 @@ const (
 	InvalidParams
 	NotFound
 	TooManyRequests
+	BadRequest
 )
 
 type Error struct {
@@ -48,6 +49,8 @@ func (e *Error) StatusCode() int {
 		return http.StatusNotFound
 	case TooManyRequests:
 		return http.StatusTooManyRequests
+	case BadRequest:
+		return http.StatusBadRequest
 	}
 	return http.StatusInternalServerError
 }

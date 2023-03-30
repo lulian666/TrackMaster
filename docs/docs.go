@@ -15,13 +15,33 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/projects": {
+        "/api/v1/accounts": {
             "get": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "project"
+                    "account"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "description",
+                        "name": "description",
+                        "in": "query"
+                    }
                 ],
                 "responses": {
                     "200": {
@@ -29,7 +49,48 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.SwaggerProjects"
+                                "$ref": "#/definitions/model.Accounts"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "parameters": [
+                    {
+                        "description": "account",
+                        "name": "project",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/model.Account"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Account"
                             }
                         }
                     },
@@ -48,7 +109,79 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/sync-projects": {
+        "/api/v1/accounts/{id}": {
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "account"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "account id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "project"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Projects"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/sync": {
             "post": {
                 "produces": [
                     "application/json"
@@ -80,13 +213,56 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "model.SwaggerProject": {
+        "model.Account": {
+            "type": "object",
+            "required": [
+                "description",
+                "id",
+                "projectID"
+            ],
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "id": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "projectID": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Accounts": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Account"
+                    }
+                },
+                "pager": {
+                    "$ref": "#/definitions/pkg.Pager"
+                }
+            }
+        },
+        "model.Project": {
             "type": "object",
             "required": [
                 "name"
             ],
             "properties": {
-                "createAt": {
+                "createdAt": {
                     "type": "string"
                 },
                 "id": {
@@ -97,18 +273,18 @@ const docTemplate = `{
                     "maxLength": 500,
                     "minLength": 2
                 },
-                "updateAt": {
+                "updatedAt": {
                     "type": "string"
                 }
             }
         },
-        "model.SwaggerProjects": {
+        "model.Projects": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.SwaggerProject"
+                        "$ref": "#/definitions/model.Project"
                     }
                 },
                 "pager": {

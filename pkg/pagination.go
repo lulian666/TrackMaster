@@ -14,7 +14,7 @@ func GetPage(c *gin.Context) int {
 }
 
 func GetPageSize(c *gin.Context) int {
-	pageSize := StrTo(c.Query("page_size")).MustInt()
+	pageSize := StrTo(c.Query("pageSize")).MustInt()
 	if pageSize <= 0 {
 		return StrTo(os.Getenv("DEFAULT_PAGE_SIZE")).MustInt()
 	}

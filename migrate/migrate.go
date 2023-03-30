@@ -16,5 +16,10 @@ func main() {
 	if err != nil {
 		log.Fatal("Error migrating database")
 	}
+
+	err = initializer.DB.AutoMigrate(&model.Account{})
+	if err != nil {
+		log.Fatal("Error migrating database")
+	}
 	log.Println("Migration successful")
 }

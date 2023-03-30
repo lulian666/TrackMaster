@@ -7,17 +7,10 @@ import (
 )
 
 type Project struct {
-	ID        string    `gorm:"primaryKey"`
-	Name      string    `gorm:"unique;not null"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-}
-
-func NewProject(id, name string) *Project {
-	return &Project{
-		ID:   id,
-		Name: name,
-	}
+	ID        string    `gorm:"primaryKey" json:"id"`
+	Name      string    `gorm:"unique;not null" json:"name" binding:"required,min=2,max=500"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
 
 func (p *Project) Create(db *gorm.DB) error {
@@ -35,14 +28,7 @@ func (p *Project) List(db *gorm.DB) ([]Project, error) {
 	return projects, nil
 }
 
-type SwaggerProject struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name" binding:"required,min=2,max=500"`
-	CreatedAt time.Time `json:"createAt"`
-	UpdatedAt time.Time `json:"updateAt"`
-}
-
-type SwaggerProjects struct {
-	Data  []*SwaggerProject
+type Projects struct {
+	Data  []*Project
 	Pager *pkg.Pager
 }
