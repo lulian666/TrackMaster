@@ -28,6 +28,14 @@ func (p *Project) List(db *gorm.DB) ([]Project, error) {
 	return projects, nil
 }
 
+func (p *Project) Get(db *gorm.DB) error {
+	result := db.First(&p)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
 type Projects struct {
 	Data  []*Project
 	Pager *pkg.Pager

@@ -76,11 +76,30 @@ const docTemplate = `{
                 ],
                 "parameters": [
                     {
-                        "description": "account",
-                        "name": "project",
+                        "description": "page",
+                        "name": "projectID",
                         "in": "body",
+                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Account"
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "page size",
+                        "name": "id",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "description",
+                        "name": "description",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -210,6 +229,48 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/stories/sync": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "story"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "project id",
+                        "name": "project",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Story"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -289,6 +350,38 @@ const docTemplate = `{
                 },
                 "pager": {
                     "$ref": "#/definitions/pkg.Pager"
+                }
+            }
+        },
+        "model.Story": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "projectID"
+            ],
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "projectID": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },

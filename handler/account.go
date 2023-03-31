@@ -22,7 +22,9 @@ func NewAccountHandler(s service.AccountService) AccountHandler {
 // @Tags account
 // @Summery create account
 // @Produce json
-// @Param project body model.Account false "account"
+// @Param projectID body string true "page"
+// @Param id body string true "page size"
+// @Param description body string true "description"
 // @Success 200 {array} model.Account "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"

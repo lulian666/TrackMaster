@@ -30,6 +30,7 @@ func (h ProjectHandler) Sync(c *gin.Context) {
 	err := h.service.SyncProject()
 	if err != nil {
 		res.ToErrorResponse(pkg.NewError(pkg.ServerError, err.Error()))
+		return
 	}
 	res.ToResponse(nil)
 }
@@ -47,6 +48,7 @@ func (h ProjectHandler) List(c *gin.Context) {
 	projects, err := h.service.ListProject()
 	if err != nil {
 		res.ToErrorResponse(pkg.NewError(pkg.ServerError, err.Error()))
+		return
 	}
 	res.ToResponseList(projects, int64(len(projects)))
 }

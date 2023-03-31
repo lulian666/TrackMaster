@@ -53,6 +53,29 @@ definitions:
       pager:
         $ref: '#/definitions/pkg.Pager'
     type: object
+  model.Story:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        maxLength: 32
+        type: string
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      projectID:
+        maxLength: 32
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - id
+    - name
+    - projectID
+    type: object
   pkg.Error:
     properties:
       code:
@@ -114,11 +137,24 @@ paths:
       - account
     post:
       parameters:
-      - description: account
+      - description: page
         in: body
-        name: project
+        name: projectID
+        required: true
         schema:
-          $ref: '#/definitions/model.Account'
+          type: string
+      - description: page size
+        in: body
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: description
+        in: body
+        name: description
+        required: true
+        schema:
+          type: string
       produces:
       - application/json
       responses:
@@ -203,4 +239,31 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - project
+  /api/v1/stories/sync:
+    post:
+      parameters:
+      - description: project id
+        in: query
+        name: project
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            items:
+              $ref: '#/definitions/model.Story'
+            type: array
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - story
 swagger: "2.0"

@@ -2,7 +2,7 @@ package jet
 
 import "encoding/json"
 
-type Response struct {
+type projectResponse struct {
 	Data []Project `json:"data"`
 }
 
@@ -30,7 +30,7 @@ func GetProjects() ([]Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	response := Response{}
+	response := projectResponse{}
 	err = json.Unmarshal(body, &response)
 
 	return response.Data, nil
