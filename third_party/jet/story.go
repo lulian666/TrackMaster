@@ -19,10 +19,11 @@ var storyFetcher = &ThirdPartyDataFetcher{
 	OnError: nil,
 }
 
-func GetStories(id string) ([]Story, error) {
+// GetStories
+// 只取最新修改过的15条需求
+func GetStories(projectID string) ([]Story, error) {
 	query := make(map[string][]string)
-	query["project"] = []string{id}
-	// 只取最新修改过的15条需求
+	query["project"] = []string{projectID}
 	//{"sortKey": "updatedAt", "sortDirection": "DESC", "pageSize": 15, "page": 1}
 	query["sortKey"] = []string{"updatedAt"}
 	query["sortDirection"] = []string{"DESC"}
@@ -30,7 +31,7 @@ func GetStories(id string) ([]Story, error) {
 	query["page"] = []string{"1"}
 
 	storyFetcher.Query = query
-	body, err := storyFetcher.FetchData(nil)
+	body, err := storyFetcher.FetchData("")
 	if err != nil {
 		return nil, err
 	}

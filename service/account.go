@@ -14,19 +14,19 @@ type AccountService interface {
 }
 
 type accountService struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func NewAccountService(db *gorm.DB) AccountService {
 	return &accountService{
-		DB: db,
+		db: db,
 	}
 }
 
 // 检查是否已存在账号
 // 返回true表示已存在，false表示不存在
 func (s accountService) accountExists(account *model.Account) (bool, error) {
-	err := account.Get(s.DB)
+	err := account.Get(s.db)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, err
 	}
@@ -40,7 +40,7 @@ func (s accountService) CreateAccount(account *model.Account) error {
 	if exists, err := s.accountExists(account); err != nil {
 		return err
 	} else if !exists {
-		if err := account.Create(s.DB); err != nil {
+		if err := account.Create(s.db); err != nil {
 			return err
 		}
 	}
@@ -49,9 +49,9 @@ func (s accountService) CreateAccount(account *model.Account) error {
 
 func (s accountService) ListAccount(account *model.Account, pager pkg.Pager) ([]model.Account, int64, error) {
 	pageOffset := pkg.GetPageOffset(pager.Page, pager.PageSize)
-	return account.List(s.DB, pageOffset, pager.PageSize)
+	return account.List(s.db, pageOffset, pager.PageSize)
 }
 
 func (s accountService) DeleteAccount(account *model.Account) error {
-	return account.Delete(s.DB)
+	return account.Delete(s.db)
 }

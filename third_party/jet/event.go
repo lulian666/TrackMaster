@@ -14,6 +14,7 @@ type Field struct {
 	Name   string    `json:"name"`
 	Type   FieldType `json:"type"`
 	Values []string  `json:"values"`
+	Note   string    `json:"note"`
 }
 
 type FieldType struct {
@@ -37,9 +38,8 @@ var eventFetcher = &ThirdPartyDataFetcher{
 
 //需要带上story id作为param
 
-func GetEvents(id string) ([]Event, error) {
-	eventFetcher.Path = eventFetcher.Path + "/" + id
-	body, err := eventFetcher.FetchData(nil)
+func GetEvents(storyID string) ([]Event, error) {
+	body, err := eventFetcher.FetchData(storyID)
 	if err != nil {
 		return nil, err
 	}

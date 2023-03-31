@@ -26,7 +26,7 @@ var projectFetcher = &ThirdPartyDataFetcher{
 }
 
 func GetProjects() ([]Project, error) {
-	body, err := projectFetcher.FetchData(nil)
+	body, err := projectFetcher.FetchData("")
 	if err != nil {
 		return nil, err
 	}

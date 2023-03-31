@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 )
 
 type DataFetcher interface {
@@ -18,18 +19,20 @@ type ThirdPartyDataFetcher struct {
 	OnError func(statusCode int)
 }
 
-func (f *ThirdPartyDataFetcher) FetchData(params map[string]string) ([]byte, error) {
+func (f *ThirdPartyDataFetcher) FetchData(params string) ([]byte, error) {
 	// 构造URL
 	u, err := url.Parse(f.Host + f.Path)
 	if err != nil {
 		return nil, err
 	}
 
+	// 添加param
+	if params != "" {
+		u.Path = path.Join(u.Path, "/", params)
+	}
+
 	// 添加查询参数
 	q := u.Query()
-	for k, v := range params {
-		q.Add(k, v)
-	}
 	for k, vs := range f.Query {
 		for _, v := range vs {
 			q.Add(k, v)
@@ -55,7 +58,7 @@ func (f *ThirdPartyDataFetcher) FetchData(params map[string]string) ([]byte, err
 		if f.OnError != nil {
 			f.OnError(resp.StatusCode)
 		}
-		return nil, fmt.Errorf("failed to fetch data, status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("failed to fetch data, status code: %d \nrequest url is %s", resp.StatusCode, u)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

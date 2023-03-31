@@ -32,7 +32,7 @@ func GetEnumTypes(projectID string) ([]Type, error) {
 	query := make(map[string][]string)
 	query["project"] = []string{projectID}
 	enumTypeFetcher.Query = query
-	body, err := enumTypeFetcher.FetchData(nil)
+	body, err := enumTypeFetcher.FetchData("")
 	if err != nil {
 		return nil, err
 	}

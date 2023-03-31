@@ -11,16 +11,16 @@ type EnumTypeService interface {
 }
 
 type enumTypeService struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func NewEnumTypeService(db *gorm.DB) EnumTypeService {
-	return &enumTypeService{DB: db}
+	return &enumTypeService{db: db}
 }
 
 func (s enumTypeService) SyncEnumType(p *model.Project) error {
 	// project 是否存在
-	err := p.Get(s.DB)
+	err := p.Get(s.db)
 	if err != nil {
 		return err
 	}
@@ -36,11 +36,11 @@ func (s enumTypeService) SyncEnumType(p *model.Project) error {
 	}
 
 	var existingTypes []model.Type
-	s.DB.Where("id IN (?)", typeIDs).Find(&existingTypes)
+	s.db.Where("id IN (?)", typeIDs).Find(&existingTypes)
 
 	// sync type
 	for i := range types {
-		var t model.Type
+		t := model.Type{}
 		for j := range existingTypes {
 			if existingTypes[j].ID == types[i].ID {
 				t = existingTypes[j]
@@ -54,7 +54,7 @@ func (s enumTypeService) SyncEnumType(p *model.Project) error {
 			t.ID = types[i].ID
 			t.ProjectID = p.ID
 			t.Type = types[i].Name
-			err = t.Create(s.DB)
+			err = t.Create(s.db)
 			if err != nil {
 				return err
 			}
@@ -68,20 +68,20 @@ func (s enumTypeService) SyncEnumType(p *model.Project) error {
 		}
 
 		var existingEnumValues []model.EnumValue
-		s.DB.Where("type_id = ?", t.ID).Where("id IN (?)", enumValueIDs).Find(&existingEnumValues)
+		s.db.Where("type_id = ?", t.ID).Where("id IN (?)", enumValueIDs).Find(&existingEnumValues)
 
 		createList := make([]model.EnumValue, 0, len(enumValues))
 		updateList := make([]model.EnumValue, 0, len(enumValues))
 
 		for m := range enumValues {
-			var ev model.EnumValue
+			ev := model.EnumValue{}
 			for n := range existingEnumValues {
 				if existingEnumValues[n].ID == enumValues[m].ID {
 					ev.ID = existingEnumValues[n].ID
 					ev.TypeId = t.ID
 					// 需要更新的记录
-					if ev.Name != existingEnumValues[n].Name {
-						ev.Name = existingEnumValues[n].Name
+					if enumValues[m].Name != existingEnumValues[n].Name {
+						ev.Name = enumValues[m].Name
 						updateList = append(updateList, ev)
 					}
 				}
@@ -98,7 +98,7 @@ func (s enumTypeService) SyncEnumType(p *model.Project) error {
 
 		// 批量更新
 		if len(updateList) > 0 {
-			result := s.DB.Save(updateList)
+			result := s.db.Save(updateList)
 			if result.Error != nil {
 				return err
 			}
@@ -106,7 +106,7 @@ func (s enumTypeService) SyncEnumType(p *model.Project) error {
 
 		// 批量创建
 		if len(createList) > 0 {
-			result := s.DB.Create(createList)
+			result := s.db.Create(createList)
 			if result.Error != nil {
 				return err
 			}

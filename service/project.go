@@ -12,12 +12,12 @@ type ProjectService interface {
 }
 
 type projectService struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func NewProjectService(db *gorm.DB) ProjectService {
 	return &projectService{
-		DB: db,
+		db: db,
 	}
 }
 
@@ -38,7 +38,7 @@ func (s projectService) SyncProject() error {
 	}
 
 	var existingProjects []model.Project
-	s.DB.Where("id IN ?", projectIDs).Find(&existingProjects)
+	s.db.Where("id IN ?", projectIDs).Find(&existingProjects)
 
 	for _, project := range projects {
 		var p model.Project
@@ -51,7 +51,7 @@ func (s projectService) SyncProject() error {
 		if p.ID == "" {
 			p.ID = project.ID
 			p.Name = project.CnName
-			err := p.Create(s.DB)
+			err := p.Create(s.db)
 			if err != nil {
 				return err
 			}
@@ -63,5 +63,5 @@ func (s projectService) SyncProject() error {
 
 func (s projectService) ListProject() ([]model.Project, error) {
 	p := &model.Project{}
-	return p.List(s.DB)
+	return p.List(s.db)
 }
