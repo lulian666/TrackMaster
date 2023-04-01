@@ -1,6 +1,9 @@
 package pkg
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 type StrTo string
 
@@ -26,4 +29,17 @@ func (s StrTo) UInt32() (uint32, error) {
 func (s StrTo) MustUInt32() uint32 {
 	v, _ := s.UInt32()
 	return v
+}
+
+type Strs []string
+
+func (m Strs) Scan(val interface{}) ([]string, error) {
+	s := val.([]uint8)
+	ss := strings.Split(string(s), "|")
+	return ss, nil
+}
+
+func (m Strs) Value() (string, error) {
+	str := strings.Join(m, "|")
+	return str, nil
 }

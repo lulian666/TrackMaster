@@ -2,8 +2,10 @@ package service
 
 import (
 	"TrackMaster/model"
+	"TrackMaster/pkg"
 	"TrackMaster/third_party/jet"
 	"gorm.io/gorm"
+	"reflect"
 )
 
 type EventService interface {
@@ -74,7 +76,11 @@ func (s eventService) SyncEvent(story model.Story) error {
 					f.EventID = e.ID
 					f.ID = fields[m].ID
 					if anyDifference(existingFields[n], fields[m]) {
-						f.Value, err = locateValue(fields[m], s.db)
+						value, err := locateValue(fields[m], s.db)
+						if err != nil {
+							return err
+						}
+						f.Value, err = pkg.Strs(value).Value()
 						if err != nil {
 							return err
 						}
@@ -93,7 +99,11 @@ func (s eventService) SyncEvent(story model.Story) error {
 				f.Type = fields[m].Type.Name
 				f.TypeID = fields[m].Type.ID
 				f.Key = fields[m].Name
-				f.Value, err = locateValue(fields[m], s.db)
+				value, err := locateValue(fields[m], s.db)
+				if err != nil {
+					return err
+				}
+				f.Value, err = pkg.Strs(value).Value()
 				if err != nil {
 					return err
 				}
@@ -130,14 +140,14 @@ func (s eventService) SyncEvent(story model.Story) error {
 			return result.Error
 		}
 	}
-
 	return nil
 }
 
 func anyDifference(existingF model.Field, f jet.Field) bool {
 	if existingF.Type != f.Type.Name ||
 		existingF.TypeID != f.Type.ID ||
-		existingF.Description != f.Note {
+		existingF.Description != f.Note ||
+		!reflect.DeepEqual(existingF.Value, f.Values) {
 		return true
 	}
 	return false
@@ -147,7 +157,7 @@ func locateValue(field jet.Field, db *gorm.DB) ([]string, error) {
 	if len(field.Values) > 0 {
 		// 根据type id和id去拿值
 		values := make([]string, 0, len(field.Values))
-		for _, v := range values {
+		for _, v := range field.Values {
 			value := model.EnumValue{}
 			result := db.Where("type_id = ?", field.Type.ID).Where("id = ?", v).Find(&value)
 			if result.Error != nil {
@@ -156,6 +166,11 @@ func locateValue(field jet.Field, db *gorm.DB) ([]string, error) {
 			if value.ID != "" {
 				values = append(values, value.Name)
 			}
+		}
+		// 如果遍历完数组里的值后，一个value都没有找到，就说明里面的值并非id
+		// 那里面的值就是我们要取的值本身，直接赋值就好了
+		if len(values) == 0 {
+			values = append(values, field.Values...)
 		}
 		return values, nil
 	} else {

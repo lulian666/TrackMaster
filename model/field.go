@@ -1,32 +1,16 @@
 package model
 
 import (
-	"database/sql/driver"
-	"strings"
 	"time"
 )
 
-type Strs []string
-
-func (m *Strs) Scan(val interface{}) error {
-	s := val.([]uint8)
-	ss := strings.Split(string(s), "|")
-	*m = ss
-	return nil
-}
-
-func (m *Strs) Value() (driver.Value, error) {
-	str := strings.Join(*m, "|")
-	return str, nil
-}
-
 type Field struct {
-	EventID     string    `gorm:"primaryKey" json:"eventID" binding:"required,max=32"`
-	ID          string    `gorm:"primaryKey" json:"id" binding:"required,max=32"`
+	EventID     string    `gorm:"type:varchar(191);primaryKey" json:"eventID" binding:"required,max=32"`
+	ID          string    `gorm:"type:varchar(191);primaryKey" json:"id" binding:"required,max=32"`
 	Type        string    `json:"type"`
 	TypeID      string    `json:"typeID"`
 	Key         string    `json:"key"`
-	Value       Strs      `json:"value"`
+	Value       string    `json:"value"` // 插入时会把数组用"|"隔开变成字符串，读取的时候也要转化一下
 	Description string    `json:"description"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
