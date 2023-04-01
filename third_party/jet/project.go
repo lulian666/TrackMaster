@@ -1,6 +1,9 @@
 package jet
 
-import "encoding/json"
+import (
+	"TrackMaster/third_party"
+	"encoding/json"
+)
 
 type projectResponse struct {
 	Data []Project `json:"data"`
@@ -13,12 +16,10 @@ type Project struct {
 	Type       string `json:"type"`
 	Registered bool   `json:"registered"`
 	ID         string `json:"id"`
-	CreatedAt  int64  `json:"createdAt"`
-	UpdatedAt  int64  `json:"updatedAt"`
 }
 
 // projectFetcher 获取所有projects
-var projectFetcher = &ThirdPartyDataFetcher{
+var projectFetcher = &third_party.ThirdPartyDataFetcher{
 	Host:    "https://jet-plus.midway.run",
 	Path:    "/v1/internals/project",
 	Query:   nil,
@@ -31,7 +32,11 @@ func GetProjects() ([]Project, error) {
 		return nil, err
 	}
 	response := projectResponse{}
+
 	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
 
 	return response.Data, nil
 }

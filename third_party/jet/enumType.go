@@ -1,6 +1,9 @@
 package jet
 
-import "encoding/json"
+import (
+	"TrackMaster/third_party"
+	"encoding/json"
+)
 
 type EnumValue struct {
 	ID          string `json:"id"`
@@ -21,7 +24,7 @@ type enumResponse struct {
 	Data []Type `json:"data"`
 }
 
-var enumTypeFetcher = &ThirdPartyDataFetcher{
+var enumTypeFetcher = &third_party.ThirdPartyDataFetcher{
 	Host:    "https://jet-plus.midway.run",
 	Path:    "/v1/internals/enumType",
 	Query:   nil, //需要带上project参数，值是project id
@@ -32,12 +35,17 @@ func GetEnumTypes(projectID string) ([]Type, error) {
 	query := make(map[string][]string)
 	query["project"] = []string{projectID}
 	enumTypeFetcher.Query = query
+
 	body, err := enumTypeFetcher.FetchData("")
 	if err != nil {
 		return nil, err
 	}
+
 	response := enumResponse{}
 	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
 
 	return response.Data, nil
 }

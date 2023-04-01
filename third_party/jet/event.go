@@ -1,6 +1,9 @@
 package jet
 
-import "encoding/json"
+import (
+	"TrackMaster/third_party"
+	"encoding/json"
+)
 
 type Event struct {
 	ID               string  `json:"id"`
@@ -29,7 +32,7 @@ type eventResponse struct {
 	Events []Event `json:"events"`
 }
 
-var eventFetcher = &ThirdPartyDataFetcher{
+var eventFetcher = &third_party.ThirdPartyDataFetcher{
 	Host:    "https://jet-plus.midway.run",
 	Path:    "/v1/internals/requirement",
 	Query:   nil,
@@ -43,8 +46,12 @@ func GetEvents(storyID string) ([]Event, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	response := eventResponse{}
 	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
 
 	return response.Events, nil
 }

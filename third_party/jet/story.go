@@ -1,6 +1,9 @@
 package jet
 
-import "encoding/json"
+import (
+	"TrackMaster/third_party"
+	"encoding/json"
+)
 
 type Story struct {
 	ID   string `json:"id"`
@@ -12,7 +15,7 @@ type storyResponse struct {
 	Data []Story `json:"data"`
 }
 
-var storyFetcher = &ThirdPartyDataFetcher{
+var storyFetcher = &third_party.ThirdPartyDataFetcher{
 	Host:    "https://jet-plus.midway.run",
 	Path:    "/v1/internals/requirement",
 	Query:   nil, //需要带上project参数，值是project id
@@ -37,6 +40,9 @@ func GetStories(projectID string) ([]Story, error) {
 	}
 	response := storyResponse{}
 	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
 
 	return response.Data, nil
 }
