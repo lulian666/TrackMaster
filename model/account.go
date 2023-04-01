@@ -29,10 +29,9 @@ func (a *Account) Get(db *gorm.DB) error {
 
 func (a *Account) List(db *gorm.DB, pageOffset, pageSize int) ([]Account, int64, error) {
 	var accounts []Account
-	var err error
 	result := db.Find(&accounts)
 	if result.Error != nil {
-		return nil, 0, err
+		return nil, 0, result.Error
 	}
 
 	if pageOffset >= 0 && pageSize > 0 {

@@ -47,10 +47,7 @@ const docTemplate = `{
                     "200": {
                         "description": "成功",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Accounts"
-                            }
+                            "$ref": "#/definitions/model.Accounts"
                         }
                     },
                     "400": {
@@ -230,6 +227,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/stories": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "story"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/model.Stories"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/stories/sync": {
             "post": {
                 "produces": [
@@ -255,6 +296,45 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/model.Story"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/stories/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "story"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "story id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/model.Story"
                         }
                     },
                     "400": {
@@ -317,6 +397,86 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Event": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "storyID"
+            ],
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Field"
+                    }
+                },
+                "id": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "onTrail": {
+                    "type": "boolean"
+                },
+                "storyID": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Field": {
+            "type": "object",
+            "required": [
+                "eventID",
+                "id"
+            ],
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "eventID": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "id": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "key": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "typeID": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "value": {
+                    "description": "插入时会把数组用\"|\"隔开变成字符串，读取的时候也要转化一下",
+                    "type": "string"
+                }
+            }
+        },
         "model.Project": {
             "type": "object",
             "required": [
@@ -353,6 +513,20 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Stories": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Story"
+                    }
+                },
+                "pager": {
+                    "$ref": "#/definitions/pkg.Pager"
+                }
+            }
+        },
         "model.Story": {
             "type": "object",
             "required": [
@@ -366,6 +540,12 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Event"
+                    }
                 },
                 "id": {
                     "type": "string",

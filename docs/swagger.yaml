@@ -29,6 +29,62 @@ definitions:
       pager:
         $ref: '#/definitions/pkg.Pager'
     type: object
+  model.Event:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      fields:
+        items:
+          $ref: '#/definitions/model.Field'
+        type: array
+      id:
+        maxLength: 32
+        type: string
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      onTrail:
+        type: boolean
+      storyID:
+        maxLength: 32
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - id
+    - name
+    - storyID
+    type: object
+  model.Field:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      eventID:
+        maxLength: 32
+        type: string
+      id:
+        maxLength: 32
+        type: string
+      key:
+        type: string
+      type:
+        type: string
+      typeID:
+        type: string
+      updatedAt:
+        type: string
+      value:
+        description: 插入时会把数组用"|"隔开变成字符串，读取的时候也要转化一下
+        type: string
+    required:
+    - eventID
+    - id
+    type: object
   model.Project:
     properties:
       createdAt:
@@ -53,12 +109,25 @@ definitions:
       pager:
         $ref: '#/definitions/pkg.Pager'
     type: object
+  model.Stories:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Story'
+        type: array
+      pager:
+        $ref: '#/definitions/pkg.Pager'
+    type: object
   model.Story:
     properties:
       createdAt:
         type: string
       description:
         type: string
+      events:
+        items:
+          $ref: '#/definitions/model.Event'
+        type: array
       id:
         maxLength: 32
         type: string
@@ -122,9 +191,7 @@ paths:
         "200":
           description: 成功
           schema:
-            items:
-              $ref: '#/definitions/model.Accounts'
-            type: array
+            $ref: '#/definitions/model.Accounts'
         "400":
           description: 请求错误
           schema:
@@ -239,6 +306,59 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - project
+  /api/v1/stories:
+    get:
+      parameters:
+      - description: page
+        in: query
+        name: page
+        type: string
+      - description: page size
+        in: query
+        name: pageSize
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/model.Stories'
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - story
+  /api/v1/stories/{id}:
+    get:
+      parameters:
+      - description: story id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/model.Story'
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - story
   /api/v1/stories/sync:
     post:
       parameters:

@@ -54,7 +54,7 @@ func (h AccountHandler) Create(c *gin.Context) {
 // @Param page query string false "page"
 // @Param pageSize query string false "page size"
 // @Param description query string false "description"
-// @Success 200 {array} model.Accounts "成功"
+// @Success 200 {object} model.Accounts "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
 // @Router /api/v1/accounts [get]

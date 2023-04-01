@@ -10,4 +10,5 @@ type Event struct {
 	OnTrail     bool      `gorm:"default:false" json:"onTrail"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+	Fields      []Field   `gorm:"foreignKey:EventID"`
 }

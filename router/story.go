@@ -12,4 +12,6 @@ func AddStoryRoutes(g *gin.RouterGroup) {
 	storyHandler := handler.NewStoryHandler(storyService)
 
 	g.POST("/stories/sync", storyHandler.Sync)
+	g.GET("/stories", storyHandler.List)
+	g.GET("/stories/:id", storyHandler.Get)
 }

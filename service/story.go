@@ -2,12 +2,15 @@ package service
 
 import (
 	"TrackMaster/model"
+	"TrackMaster/pkg"
 	"TrackMaster/third_party/jet"
 	"gorm.io/gorm"
 )
 
 type StoryService interface {
 	SyncStory(p *model.Project) error
+	ListStory(story *model.Story, pager pkg.Pager) ([]model.Story, int64, error)
+	GetStory(story *model.Story) error
 }
 
 type storyService struct {
@@ -93,4 +96,22 @@ func (s storyService) SyncStory(p *model.Project) error {
 	}
 
 	return nil
+}
+
+func (s storyService) ListStory(story *model.Story, pager pkg.Pager) ([]model.Story, int64, error) {
+	// 先判断project是否存在
+	project := model.Project{
+		ID: story.ProjectID,
+	}
+	err := project.Get(s.db)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	pageOffset := pkg.GetPageOffset(pager.Page, pager.PageSize)
+	return story.List(s.db, pageOffset, pager.PageSize)
+}
+
+func (s storyService) GetStory(story *model.Story) error {
+	return story.Get(s.db)
 }

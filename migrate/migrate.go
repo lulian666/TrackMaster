@@ -22,37 +22,12 @@ func main() {
 	//	log.Fatal("Error migrating database")
 	//}
 	//
-	//err = initializer.DB.AutoMigrate(&model.Type{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
-	//
 	//err = initializer.DB.AutoMigrate(&model.EnumValue{})
 	//if err != nil {
 	//	log.Fatal("Error migrating database")
 	//}
-	//
-	//err = initializer.DB.AutoMigrate(&model.Story{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
-	//
-	//err = initializer.DB.AutoMigrate(&model.Event{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
-	//
-	//err = initializer.DB.AutoMigrate(&model.Type{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
-	//
-	//err = initializer.DB.AutoMigrate(&model.EnumValue{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
-	//
-	//err = initializer.DB.AutoMigrate(&model.Story{})
+
+	//err := initializer.DB.AutoMigrate(&model.Story{})
 	//if err != nil {
 	//	log.Fatal("Error migrating database")
 	//}
@@ -62,10 +37,19 @@ func main() {
 	//	log.Fatal("Error migrating database")
 	//}
 
-	err := initializer.DB.AutoMigrate(&model.Field{})
-	if err != nil {
-		log.Fatal("Error migrating database")
-	}
+	//err = initializer.DB.AutoMigrate(&model.Type{})
+	//if err != nil {
+	//	log.Fatal("Error migrating database")
+	//}
+	//
+	//err = initializer.DB.AutoMigrate(&model.EnumValue{})
+	//if err != nil {
+	//	log.Fatal("Error migrating database")
+	//}
+	//err = initializer.DB.AutoMigrate(&model.Field{})
+	//if err != nil {
+	//	log.Fatal("Error migrating database")
+	//}
 
 	// 上面这个创建表时，联合主键没生效，所以用sql创建了表
 	// 后面有空研究下为什么
@@ -81,6 +65,16 @@ func main() {
 	//	`updated_at` datetime(3) NULL,
 	//	PRIMARY KEY (`id`, `event_id`)
 	//);
+
+	err := initializer.DB.AutoMigrate(&model.EventLog{})
+	if err != nil {
+		log.Fatal("Error migrating database")
+	}
+
+	//err = initializer.DB.AutoMigrate(&model.FieldLog{})
+	//if err != nil {
+	//	log.Fatal("Error migrating database")
+	//}
 
 	log.Println("Migration successful")
 }
