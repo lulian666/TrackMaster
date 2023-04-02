@@ -47,6 +47,19 @@ func (a *Account) List(db *gorm.DB, pageOffset, pageSize int) ([]Account, int64,
 	return accounts, totalRow, nil
 }
 
+func (a *Account) GetSome(db *gorm.DB, accountIDs []string) ([]Account, int64, error) {
+	var accounts []Account
+	result := db.Model(a).Where("id in (?)", accountIDs).Find(&accounts)
+
+	if result.Error != nil {
+		return nil, 0, result.Error
+	}
+
+	totalRow := result.RowsAffected
+
+	return accounts, totalRow, nil
+}
+
 func (a *Account) Delete(db *gorm.DB) error {
 	result := db.Delete(&a)
 	return result.Error

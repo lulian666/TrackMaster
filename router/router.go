@@ -12,6 +12,7 @@ func NewRouter() *gin.Engine {
 	AddProjectRoutes(apiV1)
 	AddAccountRoutes(apiV1)
 	AddStoryRoutes(apiV1)
+	AddRealTimeRoutes(apiV1)
 
 	return r
 }

@@ -5,12 +5,21 @@ import (
 	"encoding/json"
 )
 
+const (
+	READY     = "READY"
+	RECORDING = "RECORDING"
+	PAUSED    = "PAUSED"
+	STOPPED   = "STOPPED"
+)
+
+type status string
+
 type Filter struct {
-	Events  []string `json:"events"`
-	Project string   `json:"project"`
-	UserID  string   `json:"userId"`
+	Events  []string `json:"events"`  // 需要event name
+	Project string   `json:"project"` // id
 	UserIDs []string `json:"userIds"`
 	ID      string   `json:"id"`
+	Status  string   `json:"status"`
 }
 
 type FilterRes struct {
