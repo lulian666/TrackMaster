@@ -209,7 +209,7 @@ func fetchNewLog(r model.Record) int {
 					// 如果是是app的打点，传上来的key是xx.xx格式
 					// 如果是前端打点，传上来的key是xx$$xx格式
 					log := logs[i].Log
-					v, ok := log.Get(field.Key)
+					v, ok := log.Get(field.Key, logs[i].LogStr)
 					if ok && v != "" {
 						fieldLog.Value = v
 					}

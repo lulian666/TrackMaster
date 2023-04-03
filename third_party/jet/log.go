@@ -43,6 +43,7 @@ type LogDetail struct {
 	DeviceID           string  `json:"$device_id"`
 	IDFV               string  `json:"$idfv"`
 	IP                 string  `json:"$ip"`
+	UA                 string  `json:"$ua"`
 	IsFirstDay         bool    `json:"$is_first_day"`
 	Lib                string  `json:"$lib"`
 	LibMethod          string  `json:"$lib_method"`
@@ -118,6 +119,13 @@ type PageInfo struct {
 	URL   string `json:"url"`
 }
 
+type PageInfoWeb struct {
+	ID    string `json:"page_info$$id"`
+	Title string `json:"page_info$$title"`
+	Type  string `json:"page_info$$type"`
+	URL   string `json:"page_info$$url"`
+}
+
 type WebInfo struct {
 	AbtestInfo      map[string]string `json:"abtest_info"`
 	Action          string            `json:"action"`
@@ -130,6 +138,20 @@ type WebInfo struct {
 	ShareDepth      int               `json:"share_depth"`
 	ShareDistinctID string            `json:"share_distinct_id"`
 	Source          string            `json:"source"`
+}
+
+type WebInfoWeb struct {
+	AbtestInfo      map[string]string `json:"web_info$$abtest_info"`
+	Action          string            `json:"web_info$$action"`
+	Campaign        string            `json:"web_info$$campaign"`
+	ExtraAbtestInfo string            `json:"web_info$$extra_abtest_info"`
+	Host            string            `json:"web_info$$host"`
+	ID              string            `json:"web_info$$id"`
+	Label           string            `json:"web_info$$label"`
+	PageName        string            `json:"web_info$$page_name"`
+	ShareDepth      int               `json:"web_info$$share_depth"`
+	ShareDistinctID string            `json:"web_info$$share_distinct_id"`
+	Source          string            `json:"web_info$$source"`
 }
 
 var logFetcher = &third_party.ThirdPartyDataFetcher{
@@ -185,8 +207,7 @@ func ClearLogs(filterID string) error {
 
 // Get
 // 默认key的结构一定是xx.xx
-// todo 如果是前端打点，还要做处理呢
-func (log *LogDetail) Get(key string) (string, bool) {
+func (log *LogDetail) Get(key string, raw string) (string, bool) {
 	keys := strings.Split(key, ".")
 	// 不想大量使用反射的画可以用switch
 	// Go语言的 switch 语句在性能方面非常高效
@@ -300,6 +321,15 @@ func (log *LogDetail) Get(key string) (string, bool) {
 		case "url":
 			value = st.URL
 		}
+		if value == "" {
+			webLog := make(map[string]interface{})
+			err := json.Unmarshal([]byte(raw), &webLog)
+			if err != nil {
+				return "", false
+			}
+			k := keys[0] + "$$" + keys[1]
+			value = webLog[k].(string)
+		}
 	case "web_info":
 		st := log.WebInfo
 		switch keys[1] {
@@ -326,6 +356,15 @@ func (log *LogDetail) Get(key string) (string, bool) {
 			value = st.ShareDistinctID
 		case "source":
 			value = st.Source
+		}
+		if value == "" {
+			webLog := make(map[string]interface{})
+			err := json.Unmarshal([]byte(raw), &webLog)
+			if err != nil {
+				return "", false
+			}
+			k := keys[0] + "$$" + keys[1]
+			value = webLog[k].(string)
 		}
 	}
 
