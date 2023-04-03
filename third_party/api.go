@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 )
 
 type DataFetcher interface {
@@ -122,7 +123,7 @@ func (f *ThirdPartyDataFetcher) PostData(params string, body []byte) ([]byte, er
 	return resBody, nil
 }
 
-func (f *ThirdPartyDataFetcher) PatchData(params string, body []byte) ([]byte, error) {
+func (f *ThirdPartyDataFetcher) PatchData(method string, params string, body []byte) ([]byte, error) {
 	// 构造URL
 	u, err := url.Parse(f.Host + f.Path)
 	if err != nil {
@@ -143,8 +144,8 @@ func (f *ThirdPartyDataFetcher) PatchData(params string, body []byte) ([]byte, e
 	}
 	u.RawQuery = q.Encode()
 
-	// 创建 PATCH 请求
-	req, err := http.NewRequest("PATCH", u.String(), bytes.NewBuffer(body))
+	// 创建请求
+	req, err := http.NewRequest(strings.ToUpper(method), u.String(), bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}

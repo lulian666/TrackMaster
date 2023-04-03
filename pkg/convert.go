@@ -34,7 +34,7 @@ func (s StrTo) MustUInt32() uint32 {
 type Strs []string
 
 func (m Strs) Scan(val interface{}) ([]string, error) {
-	s := val.([]uint8)
+	s := val.(string)
 	ss := strings.Split(string(s), "|")
 	return ss, nil
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"TrackMaster/model"
 	"TrackMaster/model/request"
 	"TrackMaster/pkg"
 	"TrackMaster/service"
@@ -82,4 +83,15 @@ func (h RealTimeHandler) ClearLog(c *gin.Context) {
 
 func (h RealTimeHandler) ResetResult(c *gin.Context) {
 
+}
+
+func (h RealTimeHandler) Test(c *gin.Context) {
+	res := pkg.NewResponse(c)
+
+	r := model.Record{
+		ID: "dd6fd66c457e435894322b1fc7ca3496",
+	}
+
+	h.service.Test(r)
+	res.ToResponse(nil)
 }

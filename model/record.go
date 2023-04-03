@@ -26,8 +26,9 @@ type Record struct {
 	ID     string `gorm:"primaryKey" json:"id" binding:"required,max=32"`
 	Name   string `gorm:"not null" json:"name" binding:"required,min=2,max=50"`
 	Status status `sql:"type:ENUM('ON', 'OFF')"  json:"status"`
-	Filter string `json:"filter"`
+	Filter string `gorm:"unique" json:"filter"`
 
+	Events    string     `json:"events"` // 存event的id数组
 	EventLogs []EventLog `gorm:"foreignKey:RecordID" json:"eventLogs"`
 	ProjectID string     `gorm:"index;not null" json:"projectID" binding:"required,max=32"`
 

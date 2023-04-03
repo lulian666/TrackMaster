@@ -46,7 +46,7 @@ func (f Filter) Update() error {
 		return err
 	}
 
-	_, err = filterFetcher.PatchData(f.ID, reqBody)
+	_, err = filterFetcher.PatchData("PATCH", f.ID, reqBody)
 	if err != nil {
 		return err
 	}
