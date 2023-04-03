@@ -73,12 +73,6 @@ func (s storyService) SyncStory(p *model.Project) error {
 			storyCreateList = append(storyCreateList, st)
 		}
 
-		// 更新events
-		eventS := NewEventService(s.db)
-		err = eventS.SyncEvent(st)
-		if err != nil {
-			return err
-		}
 	}
 
 	if len(storyUpdateList) > 0 {
@@ -91,6 +85,17 @@ func (s storyService) SyncStory(p *model.Project) error {
 	if len(storyCreateList) > 0 {
 		result := s.db.Create(storyCreateList)
 		if result.Error != nil {
+			return err
+		}
+	}
+
+	// fix: story需要先保存
+	// 更新events
+	eventS := NewEventService(s.db)
+	storyList := append(storyCreateList, storyUpdateList...)
+	for i := range storyList {
+		err = eventS.SyncEvent(storyList[i])
+		if err != nil {
 			return err
 		}
 	}

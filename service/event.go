@@ -37,6 +37,9 @@ func (s eventService) SyncEvent(story model.Story) error {
 	eventCreateList := make([]model.Event, 0, len(events))
 	eventUpdateList := make([]model.Event, 0, len(events))
 
+	fieldCreateList := make([]model.Field, 0, len(events)*6)
+	fieldUpdateList := make([]model.Field, 0, len(events)*6)
+
 	for i := range events {
 		e := model.Event{}
 		for j := range existingEvents {
@@ -64,9 +67,6 @@ func (s eventService) SyncEvent(story model.Story) error {
 
 		var existingFields []model.Field
 		s.db.Where("event_id IN (?)", eventIDs).Find(&existingFields)
-
-		fieldCreateList := make([]model.Field, 0, len(fields))
-		fieldUpdateList := make([]model.Field, 0, len(fields))
 
 		for m := range fields {
 			f := model.Field{}
@@ -111,21 +111,7 @@ func (s eventService) SyncEvent(story model.Story) error {
 				fieldCreateList = append(fieldCreateList, f)
 			}
 		}
-		// 批量更新
-		if len(fieldUpdateList) > 0 {
-			result := s.db.Save(fieldUpdateList)
-			if result.Error != nil {
-				return result.Error
-			}
-		}
 
-		// 批量创建
-		if len(fieldCreateList) > 0 {
-			result := s.db.Create(fieldCreateList)
-			if result.Error != nil {
-				return result.Error
-			}
-		}
 	}
 	if len(eventUpdateList) > 0 {
 		result := s.db.Save(eventUpdateList)
@@ -136,6 +122,22 @@ func (s eventService) SyncEvent(story model.Story) error {
 
 	if len(eventCreateList) > 0 {
 		result := s.db.Create(eventCreateList)
+		if result.Error != nil {
+			return result.Error
+		}
+	}
+
+	// 批量更新
+	if len(fieldUpdateList) > 0 {
+		result := s.db.Save(fieldUpdateList)
+		if result.Error != nil {
+			return result.Error
+		}
+	}
+
+	// 批量创建
+	if len(fieldCreateList) > 0 {
+		result := s.db.Create(fieldCreateList)
 		if result.Error != nil {
 			return result.Error
 		}
