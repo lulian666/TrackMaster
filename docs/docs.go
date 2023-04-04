@@ -429,7 +429,6 @@ const docTemplate = `{
                         "description": "account IDs",
                         "name": "accounts",
                         "in": "body",
-                        "required": true,
                         "schema": {
                             "type": "array",
                             "items": {
@@ -441,7 +440,6 @@ const docTemplate = `{
                         "description": "event IDs",
                         "name": "events",
                         "in": "body",
-                        "required": true,
                         "schema": {
                             "type": "array",
                             "items": {
@@ -672,6 +670,7 @@ const docTemplate = `{
                     "minLength": 2
                 },
                 "onTrail": {
+                    "description": "这个字段暂时用不上",
                     "type": "boolean"
                 },
                 "storyID": {
@@ -814,14 +813,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tested": {
-                    "description": "被测试用",
+                    "description": "被测试用 //这个字段暂时用不上",
                     "type": "boolean"
                 },
                 "updatedAt": {
                     "type": "string"
                 },
                 "used": {
-                    "description": "被使用过（被前端clear log）",
+                    "description": "被使用过（被前端clear log） //这个字段暂时用不上",
                     "type": "boolean"
                 },
                 "value": {
