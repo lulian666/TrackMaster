@@ -328,7 +328,10 @@ func (log *LogDetail) Get(key string, raw string) (string, bool) {
 				return "", false
 			}
 			k := keys[0] + "$$" + keys[1]
-			value = webLog[k].(string)
+			v, ok := webLog[k].(string)
+			if ok {
+				value = v
+			}
 		}
 	case "web_info":
 		st := log.WebInfo

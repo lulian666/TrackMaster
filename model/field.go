@@ -15,3 +15,14 @@ type Field struct {
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
+
+type Fields []Field
+
+func (fs Fields) FindByID(id string) (Field, bool) {
+	for i := range fs {
+		if fs[i].ID == id {
+			return fs[i], true
+		}
+	}
+	return Field{}, false
+}

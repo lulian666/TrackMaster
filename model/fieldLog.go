@@ -8,7 +8,7 @@ type FieldLog struct {
 	ID         string `gorm:"type:varchar(191);primaryKey" json:"id" binding:"required,max=32"`
 
 	Key   string `json:"key"`
-	Value string `json:"value"`
+	Value string `gorm:"not found" json:"value"`
 
 	Used     bool   `gorm:"default:false" json:"used"`   //被使用过（被前端clear log）
 	Tested   bool   `gorm:"default:false" json:"tested"` //被测试用

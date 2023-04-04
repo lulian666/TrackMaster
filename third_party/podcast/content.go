@@ -3,6 +3,7 @@ package podcast
 import (
 	"TrackMaster/third_party"
 	"encoding/json"
+	"strings"
 )
 
 type Content struct {
@@ -16,8 +17,8 @@ type contentResponse struct {
 
 func onError() ([]byte, error) {
 	content := Content{
-		Title: "未找到相应id的内容",
-		Desc:  "可能是type或id传错，也可能是该type不支持查询",
+		Title: "podcast内部接口调用失败",
+		Desc:  "可能是type或id传错，可能是该type不支持查询，也可能是接口不稳定",
 	}
 	return json.Marshal(content)
 }
@@ -43,6 +44,11 @@ func GetPodcast(pid string) (Content, error) {
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return Content{}, err
+	}
+
+	// 有的内容太长了
+	if len(response.Data.Desc) > 20 {
+		response.Data.Desc = response.Data.Desc[:20]
 	}
 
 	return response.Data, nil
@@ -71,6 +77,10 @@ func GetEpisode(eid string) (Content, error) {
 		return Content{}, err
 	}
 
+	if len(response.Data.Desc) > 20 {
+		response.Data.Desc = response.Data.Desc[:20]
+	}
+
 	return response.Data, nil
 }
 
@@ -97,5 +107,21 @@ func GetCollection(id string) (Content, error) {
 		return Content{}, err
 	}
 
+	if len(response.Data.Desc) > 20 {
+		response.Data.Desc = response.Data.Desc[:20]
+	}
+
 	return response.Data, nil
+}
+
+func GetContentByTypeAndID(t string, id string) (Content, error) {
+	switch strings.ToLower(t) {
+	case "collection":
+		return GetCollection(id)
+	case "podcast":
+		return GetPodcast(id)
+	case "episode":
+		return GetEpisode(id)
+	}
+	return Content{}, nil
 }

@@ -6,6 +6,8 @@ import (
 	"TrackMaster/model/request"
 	"TrackMaster/pkg"
 	"TrackMaster/third_party/jet"
+	"TrackMaster/third_party/podcast"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -43,7 +45,9 @@ func (s realTimeService) Start(req request.Request) (model.Record, *pkg.Error) {
 		eventNames = append(eventNames, event.Name)
 	}
 
-	// todo event name 不能重复
+	if hasDuplicates(eventNames) {
+		return model.Record{}, pkg.NewError(pkg.BadRequest, "不能传入名字是一样的event")
+	}
 
 	eventIDs := make([]string, len(events))
 	for _, event := range events {
@@ -127,12 +131,12 @@ func (s realTimeService) Start(req request.Request) (model.Record, *pkg.Error) {
 	logCh := make(chan int)
 	// todo 需要做错误处理
 	go checkLog(2000, logCh, r) // todo 后面写成可配置
-	go testLog(logCh)
+	go testLog(logCh, r)
 
 	return r, nil
 }
 
-// 每2秒会往channel里写一个数
+// 每2秒会往channel里写一个数（如果有）
 // 直到写了limit次以后停止，并且关闭channel
 func checkLog(limit int, logCh chan<- int, r model.Record) {
 	ticker := time.NewTicker(2 * time.Second)
@@ -158,8 +162,9 @@ func checkLog(limit int, logCh chan<- int, r model.Record) {
 	close(logCh)
 }
 
+// 真正去取存数据的函数
 func fetchNewLog(r model.Record) int {
-	fmt.Println("fetchNewLog...")
+	fmt.Println("fetch NewLog...")
 	logs, _ := jet.GetLogs(r.Filter)
 	if len(logs) > 0 {
 		fmt.Println("done fetching, clear log...")
@@ -180,8 +185,6 @@ func fetchNewLog(r model.Record) int {
 			Raw:      logs[i].LogStr,
 		}
 
-		// todo Content 可以放到测试log的时候再去更新
-
 		// 被测的events都记录在record的Events字段里
 		eventIDs, _ := pkg.Strs{}.Scan(r.Events)
 		e := model.Event{}
@@ -190,6 +193,7 @@ func fetchNewLog(r model.Record) int {
 		for j := range events {
 			if el.Name == events[j].Name {
 				el.EventID = events[j].ID
+				completeContent := make(map[string]interface{})
 
 				// 遍历events[j]里的fields
 				for _, field := range events[j].Fields {
@@ -212,9 +216,23 @@ func fetchNewLog(r model.Record) int {
 					v, ok := log.Get(field.Key, logs[i].LogStr)
 					if ok && v != "" {
 						fieldLog.Value = v
+
+						// 拿content
+						if strings.HasSuffix(field.Key, "id") {
+							contentID := v
+							keys := strings.Split(field.Key, ".")
+							contentTypeKey := keys[0] + ".type"
+							contentType, _ := log.Get(contentTypeKey, logs[i].LogStr)
+							content, _ := podcast.GetContentByTypeAndID(contentType, contentID)
+							completeContent[keys[0]] = content
+						}
 					}
+
 					fieldLogCreateList = append(fieldLogCreateList, fieldLog)
 				}
+
+				content, _ := json.Marshal(completeContent)
+				el.Content = string(content)
 			}
 		}
 
@@ -240,12 +258,180 @@ func fetchNewLog(r model.Record) int {
 }
 
 // 从channel中读数，直到channel被关闭
-func testLog(logCh <-chan int) {
-	for i := range logCh {
+func testLog(logCh <-chan int, r model.Record) {
+	for count := range logCh {
 		// this loop closes when channel is closed
-		fmt.Println("reading...", i)
+		fmt.Printf("reading %d 条新log...\n", count)
+		testNewLog(count, r)
 	}
 	fmt.Println("channel closed")
+}
+
+// 真正去测试数据的函数
+// count 新增的event log数量
+// r 此次被测的record
+func testNewLog(count int, r model.Record) {
+	fmt.Println("testing NewLog...")
+	// 这里传入的record应该并没有preload EventLogs
+	initializer.DB.Model(r).Preload("EventLogs.FieldLogs").First(&r)
+	iosLogs := make([]model.EventLog, 0, count)
+	androidLogs := make([]model.EventLog, 0, count)
+	otherLogs := make([]model.EventLog, 0, count)
+
+	for _, log := range r.EventLogs {
+		if log.Platform == "iOS" && !log.Tested {
+			iosLogs = append(iosLogs, log)
+		} else if log.Platform == "Android" && !log.Tested {
+			androidLogs = append(androidLogs, log)
+		} else if !log.Tested {
+			otherLogs = append(otherLogs, log)
+		}
+	}
+
+	// 三个平台的log一起测
+	if len(iosLogs) > 0 {
+		go testEvent(iosLogs, r)
+	}
+
+	if len(androidLogs) > 0 {
+		go testEvent(androidLogs, r)
+	}
+
+	if len(otherLogs) > 0 {
+		go testEvent(otherLogs, r)
+	}
+
+}
+
+func testEvent(eventLogs []model.EventLog, r model.Record) {
+	// 被测的events都记录在record的Events字段里
+	eventIDs, _ := pkg.Strs{}.Scan(r.Events)
+	e := model.Event{}
+	events, _, _ := e.List(initializer.DB, eventIDs)
+
+	eventResultCreateList := make([]model.EventResult, 0, len(eventLogs))
+	fieldResultCreateList := make([]model.FieldResult, 0, len(eventLogs))
+	eventLogUpdateList := make([]model.EventLog, 0, len(eventLogs))
+	fieldLogUpdateList := make([]model.FieldLog, 0, len(eventLogs)*6)
+	for _, eventLog := range eventLogs {
+		// 创建event测试结构
+		u := uuid.New()
+		id := strings.ReplaceAll(u.String(), "-", "")
+		eventResult := model.EventResult{
+			RecordID: r.ID,
+			EventID:  eventLog.EventID,
+			ID:       id,
+		}
+
+		eventResultCreateList = append(eventResultCreateList, eventResult)
+		event, _ := model.Events(events).FindByID(eventLog.EventID)
+
+		for _, fieldLog := range eventLog.FieldLogs {
+			// 创建field测试结果
+			u := uuid.New()
+			id := strings.ReplaceAll(u.String(), "-", "")
+			fieldResult := model.FieldResult{
+				RecordID: r.ID,
+				FieldID:  fieldLog.FieldID,
+				ID:       id,
+			}
+
+			field, _ := model.Fields(event.Fields).FindByID(fieldLog.FieldID)
+
+			// 每一条field log挨个测试
+			// 先要找到这个field log对应的field的value
+			value := field.Value
+			if strings.Contains(value, "|") {
+				if enumFieldCheck(field, "|", fieldLog) {
+					setFieldResult(fieldLog, &fieldResult, model.SUCCESS)
+				} else {
+					setFieldResult(fieldLog, &fieldResult, model.FAIL)
+				}
+			} else if strings.Contains(value, ",") {
+				if enumFieldCheck(field, ",", fieldLog) {
+					setFieldResult(fieldLog, &fieldResult, model.SUCCESS)
+				} else {
+					setFieldResult(fieldLog, &fieldResult, model.FAIL)
+				}
+			} else if strings.Contains(value, "/") {
+				if enumFieldCheck(field, "/", fieldLog) {
+					setFieldResult(fieldLog, &fieldResult, model.SUCCESS)
+				} else {
+					setFieldResult(fieldLog, &fieldResult, model.FAIL)
+				}
+			} else {
+				if fieldLog.Value == value {
+					setFieldResult(fieldLog, &fieldResult, model.SUCCESS)
+				} else if fieldLog.Value != "not found" &&
+					(strings.Contains(field.Key, "id") ||
+						strings.Contains(field.Key, "content") ||
+						field.Value == "") {
+					setFieldResult(fieldLog, &fieldResult, model.UNCERTAIN)
+				} else {
+					setFieldResult(fieldLog, &fieldResult, model.FAIL)
+				}
+			}
+			// 标记测过的event log和field log
+			fieldLogUpdateList = append(fieldLogUpdateList, fieldLog)
+			fieldResultCreateList = append(fieldResultCreateList, fieldResult)
+		}
+
+		eventLogUpdateList = append(eventLogUpdateList, eventLog)
+	}
+	initializer.DB.Create(&eventResultCreateList)
+	initializer.DB.Create(&fieldResultCreateList)
+	initializer.DB.Model(&eventLogUpdateList).Update("tested", true)
+}
+
+func setEventResult() {
+
+}
+
+// 此处只设置，不修改
+func setFieldResult(fieldLog model.FieldLog, fieldResult *model.FieldResult, res model.TestResult) {
+	// 先区分是哪端的打点
+	switch fieldLog.Platform {
+	case "iOS":
+		fieldResult.IOS = res
+	case "Android":
+		fieldResult.Android = res
+	default:
+		fieldResult.Other = res
+	}
+
+}
+
+func enumFieldCheck(field model.Field, sep string, fieldLog model.FieldLog) bool {
+	values := strings.Split(field.Value, sep)
+	for i := range values {
+		values[i] = strings.TrimSpace(values[i])
+	}
+	var allFieldLogs []string
+	initializer.DB.Model(model.FieldLog{}).
+		Where("platform = ?", fieldLog.Platform).
+		Where("field_id = ?", fieldLog.FieldID).
+		Where("key = ?", fieldLog.Key).
+		Pluck("value", &allFieldLogs)
+	return StringArrayEqual(values, allFieldLogs)
+}
+
+func StringArrayEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for _, s := range a {
+		found := false
+		for _, t := range b {
+			if s == t {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
 }
 
 func (s realTimeService) Stop() {
@@ -272,4 +458,15 @@ func (s realTimeService) Test(r model.Record) {
 	s.db.First(&r)
 	count := fetchNewLog(r)
 	fmt.Println("count:", count)
+}
+
+func hasDuplicates(strs []string) bool {
+	set := make(map[string]bool)
+	for _, str := range strs {
+		if set[str] {
+			return true
+		}
+		set[str] = true
+	}
+	return false
 }

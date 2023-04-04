@@ -39,3 +39,14 @@ func (e *Event) ListEventName(db *gorm.DB, eventIDs []string) ([]string, int64, 
 	totalRow := result.RowsAffected
 	return events, totalRow, nil
 }
+
+type Events []Event
+
+func (es Events) FindByID(id string) (Event, bool) {
+	for i := range es {
+		if es[i].ID == id {
+			return es[i], true
+		}
+	}
+	return Event{}, false
+}
