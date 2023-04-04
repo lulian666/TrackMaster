@@ -227,6 +227,84 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/realTime/clearLog": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "realTime"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "record ID",
+                        "name": "record",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/realTime/getLog": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "realTime"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "record ID",
+                        "name": "record",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/realTime/start": {
             "post": {
                 "produces": [
@@ -244,6 +322,108 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "account IDs",
+                        "name": "accounts",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "description": "event IDs",
+                        "name": "events",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/model.Record"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/realTime/stop": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "realTime"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "record ID",
+                        "name": "record",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/model.Record"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/realTime/update": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "realTime"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "record ID",
+                        "name": "record",
+                        "in": "query",
+                        "required": true
                     },
                     {
                         "description": "account IDs",
@@ -529,6 +709,7 @@ const docTemplate = `{
                     }
                 },
                 "id": {
+                    "description": "jet返回时每个eventLog都带id",
                     "type": "string",
                     "maxLength": 32
                 },
@@ -557,6 +738,10 @@ const docTemplate = `{
                 "used": {
                     "description": "被使用过（被前端clear log）",
                     "type": "boolean"
+                },
+                "userId": {
+                    "description": "既然有这个信息，不妨存一下",
+                    "type": "string"
                 }
             }
         },
@@ -696,6 +881,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.EventLog"
                     }
+                },
+                "events": {
+                    "description": "存event的id数组",
+                    "type": "string"
                 },
                 "filter": {
                     "type": "string"

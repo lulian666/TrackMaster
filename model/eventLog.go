@@ -24,17 +24,20 @@ type EventLog struct {
 	FieldLogs []FieldLog `gorm:"foreignKey:EventLogID"`
 }
 
-func (e *EventLog) List(db *gorm.DB, pageOffset, pageSize int) ([]EventLog, int64, error) {
+func (e *EventLog) ListUnused(db *gorm.DB, recordID string) ([]EventLog, int64, error) {
 	var eventLogs []EventLog
-	result := db.Where("record_id = ?", e.RecordID).Find(&eventLogs)
+	result := db.Preload("FieldLogs").Where("record_id = ?", recordID).Where("used = ?", false).Order("created_at desc").Find(&eventLogs)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
 
-	if pageOffset >= 0 && pageSize > 0 {
-		result = result.Offset(pageOffset).Limit(pageSize).Find(&eventLogs)
-	}
-
 	totalRow := result.RowsAffected
 	return eventLogs, totalRow, nil
+}
+
+type EventLogs []EventLog
+
+func (e EventLogs) UpdateToUsed(db *gorm.DB) error {
+	result := db.Save(e).Update("used", true)
+	return result.Error
 }

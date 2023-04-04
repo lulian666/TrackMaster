@@ -40,3 +40,18 @@ func (r *Record) Create(db *gorm.DB) error {
 	result := db.Create(r)
 	return result.Error
 }
+
+func (r *Record) Get(db *gorm.DB) error {
+	result := db.Preload("EventLogs.FieldLogs").First(&r)
+	return result.Error
+}
+
+func (r *Record) Update(db *gorm.DB) error {
+	err := r.Get(db)
+	if err != nil {
+		return err
+	}
+
+	result := db.Model(&r).Update("status", OFF)
+	return result.Error
+}

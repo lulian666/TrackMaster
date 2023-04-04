@@ -17,11 +17,11 @@ import (
 )
 
 type RealTimeService interface {
-	Start(req request.Request) (model.Record, *pkg.Error)
-	Stop()
-	Update()
-	GetLog()
-	ClearLog()
+	Start(req request.Start) (model.Record, *pkg.Error)
+	Stop(r *model.Record) *pkg.Error
+	Update(r *model.Record, req request.Update) *pkg.Error
+	GetLog(r *model.Record) ([]model.EventLog, int64, *pkg.Error)
+	ClearLog(r *model.Record) *pkg.Error
 	ResetResult()
 	Test(r model.Record)
 }
@@ -36,54 +36,28 @@ func NewRealTimeService(db *gorm.DB) RealTimeService {
 	}
 }
 
-func (s realTimeService) Start(req request.Request) (model.Record, *pkg.Error) {
-	// 判断events存不存在
-	e := model.Event{}
-	events, totalRow, err := e.List(s.db, req.EventIDs)
-	eventNames := make([]string, len(events))
-	for _, event := range events {
-		eventNames = append(eventNames, event.Name)
-	}
-
-	if hasDuplicates(eventNames) {
-		return model.Record{}, pkg.NewError(pkg.BadRequest, "不能传入名字是一样的event")
-	}
-
-	eventIDs := make([]string, len(events))
-	for _, event := range events {
-		eventIDs = append(eventIDs, event.ID)
-	}
-
-	if totalRow < int64(len(req.EventIDs)) {
-		return model.Record{}, pkg.NewError(pkg.BadRequest, "传入的events id有一部分不存在")
-	}
-
+func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
+	// 判断events合不合法
+	eventIDs, eventNames, err := eventsLegitimate(s.db, req.EventIDs)
 	if err != nil {
-		return model.Record{}, pkg.NewError(pkg.ServerError, err.Error())
+		return model.Record{}, err
 	}
-
-	// 判断accounts存不存在
-	a := model.Account{}
-	_, totalRow, err = a.GetSome(s.db, req.AccountIDs)
-
-	if totalRow < int64(len(req.AccountIDs)) {
-		return model.Record{}, pkg.NewError(pkg.BadRequest, "传入的accounts id有一部分不存在")
-	}
-
+	// 判断accounts合不合法
+	err = accountsLegitimate(s.db, req.AccountIDs)
 	if err != nil {
-		return model.Record{}, pkg.NewError(pkg.ServerError, err.Error())
+		return model.Record{}, err
 	}
 
 	// 判断project存不存在
 	p := model.Project{
 		ID: req.Project,
 	}
-	err = p.Get(s.db)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	err1 := p.Get(s.db)
+	if err1 != nil {
+		if errors.Is(err1, gorm.ErrRecordNotFound) {
 			return model.Record{}, pkg.NewError(pkg.BadRequest, "project does not exist")
 		}
-		return model.Record{}, pkg.NewError(pkg.ServerError, err.Error())
+		return model.Record{}, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	// 创建filter
@@ -92,9 +66,9 @@ func (s realTimeService) Start(req request.Request) (model.Record, *pkg.Error) {
 		Project: p.ID,
 		UserIDs: req.AccountIDs,
 	}
-	filterRes, err := filter.Create()
-	if err != nil {
-		return model.Record{}, pkg.NewError(pkg.ServerError, err.Error())
+	filterRes, err1 := filter.Create()
+	if err1 != nil {
+		return model.Record{}, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	if filterRes.Status != "READY" {
@@ -103,9 +77,9 @@ func (s realTimeService) Start(req request.Request) (model.Record, *pkg.Error) {
 
 	filter.ID = filterRes.ID
 	filter.Status = jet.RECORDING
-	err = filter.Update()
-	if err != nil {
-		return model.Record{}, pkg.NewError(pkg.ServerError, err.Error())
+	err1 = filter.Update()
+	if err1 != nil {
+		return model.Record{}, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	// 创建record
@@ -121,9 +95,9 @@ func (s realTimeService) Start(req request.Request) (model.Record, *pkg.Error) {
 		ID:        id,
 		Events:    eventsValue,
 	}
-	err = r.Create(s.db)
-	if err != nil {
-		return r, pkg.NewError(pkg.ServerError, err.Error())
+	err1 = r.Create(s.db)
+	if err1 != nil {
+		return r, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	// todo 创建存log和测log的任务
@@ -136,19 +110,170 @@ func (s realTimeService) Start(req request.Request) (model.Record, *pkg.Error) {
 	return r, nil
 }
 
+func (s realTimeService) Stop(r *model.Record) *pkg.Error {
+	err := r.Update(s.db)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
+		}
+		return pkg.NewError(pkg.ServerError, err.Error())
+	}
+
+	filter := jet.Filter{
+		ID:     r.Filter,
+		Status: jet.STOPPED,
+	}
+	_ = filter.Update()
+
+	return nil
+}
+
+func (s realTimeService) Update(r *model.Record, req request.Update) *pkg.Error {
+	// 判断record是否存在
+	err := r.Get(s.db)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
+		}
+		return pkg.NewError(pkg.ServerError, err.Error())
+	}
+
+	// 修改filter
+	filter := jet.Filter{
+		ID: r.Filter,
+	}
+
+	// 判断events合不合法
+	if len(req.EventIDs) > 0 {
+		eventIDs, eventNames, err := eventsLegitimate(s.db, req.EventIDs)
+		if err != nil {
+			return err
+		}
+		filter.Events = eventNames
+		eventsValue, _ := pkg.Strs(eventIDs).Value()
+		r.Events = eventsValue
+	}
+
+	// 判断accounts合不合法
+	if len(req.AccountIDs) > 0 {
+		err := accountsLegitimate(s.db, req.AccountIDs)
+		if err != nil {
+			return err
+		}
+		filter.UserIDs = req.AccountIDs
+	}
+
+	err1 := filter.Update()
+	if err1 != nil {
+		return pkg.NewError(pkg.ServerError, err1.Error())
+	}
+
+	result := s.db.Save(&r)
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
+}
+
+func (s realTimeService) GetLog(r *model.Record) ([]model.EventLog, int64, *pkg.Error) {
+	// 只取未used的log并且按创建时间倒叙排
+	el := model.EventLog{}
+	logs, totalRow, err := el.ListUnused(s.db, r.ID)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
+		}
+		return nil, 0, pkg.NewError(pkg.ServerError, err.Error())
+	}
+
+	return logs, totalRow, nil
+}
+
+func (s realTimeService) ClearLog(r *model.Record) *pkg.Error {
+	err := r.Get(s.db)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
+		}
+		return pkg.NewError(pkg.ServerError, err.Error())
+	}
+
+	eventLogs := r.EventLogs
+	err = model.EventLogs(eventLogs).UpdateToUsed(s.db)
+	if err != nil {
+		return pkg.NewError(pkg.ServerError, err.Error())
+	}
+
+	return nil
+}
+
+func (s realTimeService) ResetResult() {
+
+}
+
+func (s realTimeService) Test(r model.Record) {
+	s.db.First(&r)
+	count := fetchNewLog(r)
+	fmt.Println("count:", count)
+}
+
+func eventsLegitimate(db *gorm.DB, ids []string) ([]string, []string, *pkg.Error) {
+	e := model.Event{}
+	events, totalRow, err := e.List(db, ids)
+	eventNames := make([]string, len(events))
+	for _, event := range events {
+		eventNames = append(eventNames, event.Name)
+	}
+
+	if hasDuplicates(eventNames) {
+		return nil, nil, pkg.NewError(pkg.BadRequest, "不能传入名字是一样的event")
+	}
+
+	eventIDs := make([]string, len(events))
+	for _, event := range events {
+		eventIDs = append(eventIDs, event.ID)
+	}
+
+	if totalRow < int64(len(ids)) {
+		return nil, nil, pkg.NewError(pkg.BadRequest, "传入的events id有一部分不存在")
+	}
+
+	if err != nil {
+		return nil, nil, pkg.NewError(pkg.ServerError, err.Error())
+	}
+	return eventIDs, eventNames, nil
+}
+
+func accountsLegitimate(db *gorm.DB, ids []string) *pkg.Error {
+	a := model.Account{}
+	_, totalRow, err := a.GetSome(db, ids)
+
+	if totalRow < int64(len(ids)) {
+		return pkg.NewError(pkg.BadRequest, "传入的accounts id有一部分不存在")
+	}
+
+	if err != nil {
+		return pkg.NewError(pkg.ServerError, err.Error())
+	}
+	return nil
+}
+
 // 每2秒会往channel里写一个数（如果有）
 // 直到写了limit次以后停止，并且关闭channel
 func checkLog(limit int, logCh chan<- int, r model.Record) {
 	ticker := time.NewTicker(2 * time.Second)
 	i := 1
 	for range ticker.C {
-		if i > limit {
+		initializer.DB.First(&r)
+		if i > limit || r.Status == model.OFF {
 			ticker.Stop()
 			r.Status = model.OFF
 			initializer.DB.Save(r)
 			break
 		}
 
+		// todo 如果这个函数出错了，别block在这
 		count := fetchNewLog(r)
 
 		if count > 0 {
@@ -169,92 +294,91 @@ func fetchNewLog(r model.Record) int {
 	if len(logs) > 0 {
 		fmt.Println("done fetching, clear log...")
 		_ = jet.ClearLogs(r.Filter)
-	}
 
-	// 存log
-	// 找到event和eventLog的对应关系
-	logCreateList := make([]model.EventLog, 0, len(logs))
-	fieldLogCreateList := make([]model.FieldLog, 0, len(logs)*10)
-	for i := range logs {
-		el := model.EventLog{
-			RecordID: r.ID,
-			ID:       logs[i].ID,
-			Name:     logs[i].Event,
-			UserID:   logs[i].UserID,
-			Platform: logs[i].Log.OS,
-			Raw:      logs[i].LogStr,
+		// 存log
+		// 找到event和eventLog的对应关系
+		logCreateList := make([]model.EventLog, 0, len(logs))
+		fieldLogCreateList := make([]model.FieldLog, 0, len(logs)*10)
+		for i := range logs {
+			el := model.EventLog{
+				RecordID: r.ID,
+				ID:       logs[i].ID,
+				Name:     logs[i].Event,
+				UserID:   logs[i].UserID,
+				Platform: logs[i].Log.OS,
+				Raw:      logs[i].LogStr,
+			}
+
+			// 被测的events都记录在record的Events字段里
+			eventIDs, _ := pkg.Strs{}.Scan(r.Events)
+			e := model.Event{}
+			events, _, _ := e.List(initializer.DB, eventIDs)
+
+			for j := range events {
+				if el.Name == events[j].Name {
+					el.EventID = events[j].ID
+					completeContent := make(map[string]interface{})
+
+					// 遍历events[j]里的fields
+					for _, field := range events[j].Fields {
+						// 有一个field(需求)，就要创建一个fieldLog(结果)
+						// 结果可以为空，但必须有记录
+						u := uuid.New()
+						id := strings.ReplaceAll(u.String(), "-", "")
+						fieldLog := model.FieldLog{
+							EventLogID: el.ID,
+							FieldID:    field.ID,
+							ID:         id,
+							Key:        field.Key,
+							Value:      "not found", // 默认值，如果找到了就填充进去
+							Platform:   el.Platform,
+						}
+
+						// 如果是是app的打点，传上来的key是xx.xx格式
+						// 如果是前端打点，传上来的key是xx$$xx格式
+						log := logs[i].Log
+						v, ok := log.Get(field.Key, logs[i].LogStr)
+						if ok && v != "" {
+							fieldLog.Value = v
+
+							// 拿content
+							if strings.HasSuffix(field.Key, "id") {
+								contentID := v
+								keys := strings.Split(field.Key, ".")
+								contentTypeKey := keys[0] + ".type"
+								contentType, _ := log.Get(contentTypeKey, logs[i].LogStr)
+								content, _ := podcast.GetContentByTypeAndID(contentType, contentID)
+								completeContent[keys[0]] = content
+							}
+						}
+
+						fieldLogCreateList = append(fieldLogCreateList, fieldLog)
+					}
+
+					content, _ := json.Marshal(completeContent)
+					el.Content = string(content)
+				}
+			}
+
+			logCreateList = append(logCreateList, el)
 		}
 
-		// 被测的events都记录在record的Events字段里
-		eventIDs, _ := pkg.Strs{}.Scan(r.Events)
-		e := model.Event{}
-		events, _, _ := e.List(initializer.DB, eventIDs)
-
-		for j := range events {
-			if el.Name == events[j].Name {
-				el.EventID = events[j].ID
-				completeContent := make(map[string]interface{})
-
-				// 遍历events[j]里的fields
-				for _, field := range events[j].Fields {
-					// 有一个field(需求)，就要创建一个fieldLog(结果)
-					// 结果可以为空，但必须有记录
-					u := uuid.New()
-					id := strings.ReplaceAll(u.String(), "-", "")
-					fieldLog := model.FieldLog{
-						EventLogID: el.ID,
-						FieldID:    field.ID,
-						ID:         id,
-						Key:        field.Key,
-						Value:      "not found", // 默认值，如果找到了就填充进去
-						Platform:   el.Platform,
-					}
-
-					// 如果是是app的打点，传上来的key是xx.xx格式
-					// 如果是前端打点，传上来的key是xx$$xx格式
-					log := logs[i].Log
-					v, ok := log.Get(field.Key, logs[i].LogStr)
-					if ok && v != "" {
-						fieldLog.Value = v
-
-						// 拿content
-						if strings.HasSuffix(field.Key, "id") {
-							contentID := v
-							keys := strings.Split(field.Key, ".")
-							contentTypeKey := keys[0] + ".type"
-							contentType, _ := log.Get(contentTypeKey, logs[i].LogStr)
-							content, _ := podcast.GetContentByTypeAndID(contentType, contentID)
-							completeContent[keys[0]] = content
-						}
-					}
-
-					fieldLogCreateList = append(fieldLogCreateList, fieldLog)
-				}
-
-				content, _ := json.Marshal(completeContent)
-				el.Content = string(content)
+		if len(logCreateList) > 0 {
+			result := initializer.DB.Create(logCreateList)
+			if result.Error != nil {
+				fmt.Println(result.Error.Error())
 			}
 		}
 
-		logCreateList = append(logCreateList, el)
-	}
-
-	if len(logCreateList) > 0 {
-		result := initializer.DB.Create(logCreateList)
-		if result.Error != nil {
-			fmt.Println(result.Error.Error())
+		// 理论上所有收集到的log都是按照events去过滤的，每一条log都是需要存的
+		if len(fieldLogCreateList) > 0 {
+			result := initializer.DB.Create(fieldLogCreateList)
+			if result.Error != nil {
+				fmt.Println(result.Error.Error())
+			}
 		}
 	}
-
-	// 理论上所有收集到的log都是按照events去过滤的，每一条log都是需要存的
-	if len(fieldLogCreateList) > 0 {
-		result := initializer.DB.Create(fieldLogCreateList)
-		if result.Error != nil {
-			fmt.Println(result.Error.Error())
-		}
-	}
-
-	return len(logCreateList)
+	return len(logs)
 }
 
 // 从channel中读数，直到channel被关闭
@@ -412,10 +536,10 @@ func enumFieldCheck(field model.Field, sep string, fieldLog model.FieldLog) bool
 		Where("field_id = ?", fieldLog.FieldID).
 		Where("key = ?", fieldLog.Key).
 		Pluck("value", &allFieldLogs)
-	return StringArrayEqual(values, allFieldLogs)
+	return stringArrayEqual(values, allFieldLogs)
 }
 
-func StringArrayEqual(a, b []string) bool {
+func stringArrayEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -432,32 +556,6 @@ func StringArrayEqual(a, b []string) bool {
 		}
 	}
 	return true
-}
-
-func (s realTimeService) Stop() {
-
-}
-
-func (s realTimeService) Update() {
-
-}
-
-func (s realTimeService) GetLog() {
-
-}
-
-func (s realTimeService) ClearLog() {
-
-}
-
-func (s realTimeService) ResetResult() {
-
-}
-
-func (s realTimeService) Test(r model.Record) {
-	s.db.First(&r)
-	count := fetchNewLog(r)
-	fmt.Println("count:", count)
 }
 
 func hasDuplicates(strs []string) bool {

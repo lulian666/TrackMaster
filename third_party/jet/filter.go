@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	READY     = "READY"
-	RECORDING = "RECORDING"
-	PAUSED    = "PAUSED"
-	STOPPED   = "STOPPED"
+	READY     status = "READY"
+	RECORDING status = "RECORDING"
+	PAUSED    status = "PAUSED"
+	STOPPED   status = "STOPPED"
 )
 
 type status string
@@ -19,7 +19,7 @@ type Filter struct {
 	Project string   `json:"project"` // id
 	UserIDs []string `json:"userIds"`
 	ID      string   `json:"id"`
-	Status  string   `json:"status"`
+	Status  status   `json:"status"`
 }
 
 type FilterRes struct {

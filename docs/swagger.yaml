@@ -72,6 +72,7 @@ definitions:
           $ref: '#/definitions/model.FieldLog'
         type: array
       id:
+        description: jet返回时每个eventLog都带id
         maxLength: 32
         type: string
       name:
@@ -93,6 +94,9 @@ definitions:
       used:
         description: 被使用过（被前端clear log）
         type: boolean
+      userId:
+        description: 既然有这个信息，不妨存一下
+        type: string
     required:
     - eventID
     - id
@@ -190,6 +194,9 @@ definitions:
         items:
           $ref: '#/definitions/model.EventLog'
         type: array
+      events:
+        description: 存event的id数组
+        type: string
       filter:
         type: string
       id:
@@ -416,6 +423,56 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - project
+  /api/v1/realTime/clearLog:
+    post:
+      parameters:
+      - description: record ID
+        in: query
+        name: record
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            type: object
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - realTime
+  /api/v1/realTime/getLog:
+    get:
+      parameters:
+      - description: record ID
+        in: query
+        name: record
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            type: object
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - realTime
   /api/v1/realTime/start:
     post:
       parameters:
@@ -425,6 +482,72 @@ paths:
         required: true
         schema:
           type: string
+      - description: account IDs
+        in: body
+        name: accounts
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      - description: event IDs
+        in: body
+        name: events
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/model.Record'
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - realTime
+  /api/v1/realTime/stop:
+    post:
+      parameters:
+      - description: record ID
+        in: query
+        name: record
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/model.Record'
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - realTime
+  /api/v1/realTime/update:
+    post:
+      parameters:
+      - description: record ID
+        in: query
+        name: record
+        required: true
+        type: string
       - description: account IDs
         in: body
         name: accounts

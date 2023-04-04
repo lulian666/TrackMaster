@@ -10,7 +10,7 @@ type Event struct {
 	ID          string    `gorm:"primaryKey" json:"id" binding:"required,max=32"`
 	Name        string    `gorm:"not null" json:"name" binding:"required,min=2,max=50"`
 	Description string    `json:"description"`
-	OnTrail     bool      `gorm:"default:false" json:"onTrail"`
+	OnTrail     bool      `gorm:"default:false" json:"onTrail"` //这个字段暂时用不上
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 	Fields      []Field   `gorm:"foreignKey:EventID"`

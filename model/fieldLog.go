@@ -10,8 +10,8 @@ type FieldLog struct {
 	Key   string `json:"key"`
 	Value string `gorm:"not found" json:"value"`
 
-	Used     bool   `gorm:"default:false" json:"used"`   //被使用过（被前端clear log）
-	Tested   bool   `gorm:"default:false" json:"tested"` //被测试用
+	Used     bool   `gorm:"default:false" json:"used"`   //被使用过（被前端clear log） //这个字段暂时用不上
+	Tested   bool   `gorm:"default:false" json:"tested"` //被测试用 //这个字段暂时用不上
 	Platform string `gorm:"not null" json:"platform"`
 
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
