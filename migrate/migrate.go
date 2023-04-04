@@ -71,25 +71,25 @@ func main() {
 	//	log.Fatal("Error migrating database")
 	//}
 	//
-	err := initializer.DB.AutoMigrate(&model.FieldLog{})
-	if err != nil {
-		log.Fatal("Error migrating database")
-	}
+	//err := initializer.DB.AutoMigrate(&model.FieldLog{})
+	//if err != nil {
+	//	log.Fatal("Error migrating database")
+	//}
 
 	//err := initializer.DB.AutoMigrate(&model.Record{})
 	//if err != nil {
 	//	log.Fatal("Error migrating database")
 	//}
 
-	//err := initializer.DB.AutoMigrate(&model.EventResult{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
+	err := initializer.DB.AutoMigrate(&model.EventResult{})
+	if err != nil {
+		log.Fatal("Error migrating database")
+	}
 
-	//err = initializer.DB.AutoMigrate(&model.FieldResult{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
+	err = initializer.DB.AutoMigrate(&model.FieldResult{})
+	if err != nil {
+		log.Fatal("Error migrating database")
+	}
 
 	log.Println("Migration successful")
 }

@@ -315,12 +315,12 @@ func testEvent(eventLogs []model.EventLog, r model.Record) {
 	fieldLogUpdateList := make([]model.FieldLog, 0, len(eventLogs)*6)
 	for _, eventLog := range eventLogs {
 		// 创建event测试结构
-		u := uuid.New()
-		id := strings.ReplaceAll(u.String(), "-", "")
+		u1 := uuid.New()
+		id1 := strings.ReplaceAll(u1.String(), "-", "")
 		eventResult := model.EventResult{
 			RecordID: r.ID,
 			EventID:  eventLog.EventID,
-			ID:       id,
+			ID:       id1,
 		}
 
 		eventResultCreateList = append(eventResultCreateList, eventResult)
@@ -328,12 +328,12 @@ func testEvent(eventLogs []model.EventLog, r model.Record) {
 
 		for _, fieldLog := range eventLog.FieldLogs {
 			// 创建field测试结果
-			u := uuid.New()
-			id := strings.ReplaceAll(u.String(), "-", "")
+			u2 := uuid.New()
+			id2 := strings.ReplaceAll(u2.String(), "-", "")
 			fieldResult := model.FieldResult{
 				RecordID: r.ID,
 				FieldID:  fieldLog.FieldID,
-				ID:       id,
+				ID:       id2,
 			}
 
 			field, _ := model.Fields(event.Fields).FindByID(fieldLog.FieldID)

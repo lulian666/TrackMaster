@@ -30,12 +30,12 @@ type EventResult struct {
 	Result
 	RecordID string `gorm:"not null" json:"recordID"`
 	EventID  string `gorm:"not null" json:"eventID"`
-	ID       string `gorm:"primaryKey" json:"id"`
+	ID       string `gorm:"type:varchar(191);primaryKey" json:"id" binding:"required,max=32"`
 }
 
 type FieldResult struct {
 	Result
 	RecordID string `gorm:"not null" json:"recordID"`
 	FieldID  string `gorm:"not null" json:"fieldID"`
-	ID       string `gorm:"primaryKey" json:"id"`
+	ID       string `gorm:"type:varchar(191);primaryKey" json:"id" binding:"required,max=32"`
 }
