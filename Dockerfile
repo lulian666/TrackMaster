@@ -20,7 +20,7 @@ RUN chown -R app-user /app
 # Use the non-privileged user for next actions
 USER app-user
 
-EXPOSE 8000
+EXPOSE 8000 80
 
 # Set the entrypoint
-CMD ["/app/TrackMaster"]
+ENTRYPOINT ./entrypoint.sh
