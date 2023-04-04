@@ -1,26 +1,21 @@
-FROM golang:1.20-alpine@sha256:48f336ef8366b9d6246293e3047259d0f614ee167db1869bdbc343d6e09aed8a
+FROM golang:1.20-alpine@sha256:48f336ef8366b9d6246293e3047259d0f614ee167db1869bdbc343d6e09aed8a AS builder
 
-# Create folder /app and non-privileged user as root
-RUN mkdir /app && \
-    adduser -S app-user
+RUN apk add --update --no-cache git make
+WORKDIR /app
+COPY . .
+RUN make build
 
-# Copy the project to the /app folder
-COPY . /app
 
-# Set the current folder as /app
+
+FROM alpine:latest
+
 WORKDIR /app
 
-# Build the app
-RUN go get ./... && \
-    go build -o ./TrackMaster
+COPY --from=builder /app/TrackMaster /app/TrackMaster
+COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
 
-# Change owner
-RUN chown -R app-user /app
-
-# Use the non-privileged user for next actions
-USER app-user
-
-EXPOSE 8000 80
+EXPOSE 8000
 
 # Set the entrypoint
+#CMD ["/app/TrackMaster"]
 ENTRYPOINT ./entrypoint.sh
