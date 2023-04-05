@@ -23,7 +23,9 @@ type RealTimeService interface {
 	GetLog(r *model.Record) ([]model.EventLog, int64, *pkg.Error)
 	ClearLog(r *model.Record) *pkg.Error
 	ResetResult()
+	GetResult(r *model.Record) ([]model.Event, int64, *pkg.Error)
 	Test(r model.Record)
+	//recordExist(r *model.Record) *pkg.Error
 }
 
 type realTimeService struct {
@@ -38,7 +40,7 @@ func NewRealTimeService(db *gorm.DB) RealTimeService {
 
 func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
 	// 判断events合不合法
-	eventIDs, eventNames, err := eventsLegitimate(s.db, req.EventIDs)
+	_, eventNames, err, events := eventsLegitimate(s.db, req.EventIDs)
 	if err != nil {
 		return model.Record{}, err
 	}
@@ -85,7 +87,7 @@ func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
 	// 创建record
 	u := uuid.New()
 	id := strings.ReplaceAll(u.String(), "-", "")
-	eventsValue, _ := pkg.Strs(eventIDs).Value()
+	//eventsValue, _ := pkg.Strs(eventIDs).Value()
 
 	r := model.Record{
 		Name:      "实时埋点测试" + time.Stamp,
@@ -93,7 +95,8 @@ func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
 		Filter:    filter.ID,
 		ProjectID: filter.Project,
 		ID:        id,
-		Events:    eventsValue,
+		//Events:    eventsValue,
+		Events: events,
 	}
 	err1 = r.Create(s.db)
 	if err1 != nil {
@@ -130,12 +133,9 @@ func (s realTimeService) Stop(r *model.Record) *pkg.Error {
 
 func (s realTimeService) Update(r *model.Record, req request.Update) *pkg.Error {
 	// 判断record是否存在
-	err := r.Get(s.db)
+	err := s.recordExist(r)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
-		}
-		return pkg.NewError(pkg.ServerError, err.Error())
+		return err
 	}
 
 	// 修改filter
@@ -145,13 +145,14 @@ func (s realTimeService) Update(r *model.Record, req request.Update) *pkg.Error 
 
 	// 判断events合不合法
 	if len(req.EventIDs) > 0 {
-		eventIDs, eventNames, err := eventsLegitimate(s.db, req.EventIDs)
+		_, eventNames, err, events := eventsLegitimate(s.db, req.EventIDs)
 		if err != nil {
 			return err
 		}
 		filter.Events = eventNames
-		eventsValue, _ := pkg.Strs(eventIDs).Value()
-		r.Events = eventsValue
+		//eventsValue, _ := pkg.Strs(eventIDs).Value()
+		//r.Events = eventsValue
+		r.Events = events
 	}
 
 	// 判断accounts合不合法
@@ -191,18 +192,15 @@ func (s realTimeService) GetLog(r *model.Record) ([]model.EventLog, int64, *pkg.
 }
 
 func (s realTimeService) ClearLog(r *model.Record) *pkg.Error {
-	err := r.Get(s.db)
+	err := s.recordExist(r)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
-		}
-		return pkg.NewError(pkg.ServerError, err.Error())
+		return err
 	}
 
 	eventLogs := r.EventLogs
-	err = model.EventLogs(eventLogs).UpdateToUsed(s.db)
-	if err != nil {
-		return pkg.NewError(pkg.ServerError, err.Error())
+	err1 := model.EventLogs(eventLogs).UpdateToUsed(s.db)
+	if err1 != nil {
+		return pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	return nil
@@ -212,13 +210,54 @@ func (s realTimeService) ResetResult() {
 
 }
 
+func (s realTimeService) GetResult(r *model.Record) ([]model.Event, int64, *pkg.Error) {
+	err := s.recordExist(r)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	e := model.Event{}
+	//eventIDs, _ := pkg.Strs{}.Scan(r.Events)
+	es := model.Events(r.Events)
+
+	fmt.Println("events 数量：", len(r.Events))
+	eventIDs, _ := es.ListEventID()
+	events, totalRow, err1 := e.ListWithNewestResult(s.db, eventIDs, r.ID)
+
+	if err1 != nil {
+		return nil, 0, pkg.NewError(pkg.ServerError, err.Error())
+	}
+
+	// 批量查询
+	//eventResults := model.EventResults(make([]model.EventResult, 0, totalRow))
+	//err = eventResults.Get(s.db, *r, events)
+	//if err != nil {
+	//	return nil, 0, err
+	//}
+
+	// 一一对应
+
+	return events, totalRow, nil
+}
+
+func (s realTimeService) recordExist(r *model.Record) *pkg.Error {
+	err := r.Get(s.db)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
+		}
+		return pkg.NewError(pkg.ServerError, err.Error())
+	}
+	return nil
+}
+
 func (s realTimeService) Test(r model.Record) {
 	s.db.First(&r)
 	count := fetchNewLog(r)
 	fmt.Println("count:", count)
 }
 
-func eventsLegitimate(db *gorm.DB, ids []string) ([]string, []string, *pkg.Error) {
+func eventsLegitimate(db *gorm.DB, ids []string) ([]string, []string, *pkg.Error, []model.Event) {
 	e := model.Event{}
 	events, totalRow, err := e.List(db, ids)
 	eventNames := make([]string, len(events))
@@ -227,7 +266,7 @@ func eventsLegitimate(db *gorm.DB, ids []string) ([]string, []string, *pkg.Error
 	}
 
 	if hasDuplicates(eventNames) {
-		return nil, nil, pkg.NewError(pkg.BadRequest, "不能传入名字是一样的event")
+		return nil, nil, pkg.NewError(pkg.BadRequest, "不能传入名字是一样的event"), nil
 	}
 
 	eventIDs := make([]string, len(events))
@@ -236,13 +275,13 @@ func eventsLegitimate(db *gorm.DB, ids []string) ([]string, []string, *pkg.Error
 	}
 
 	if totalRow < int64(len(ids)) {
-		return nil, nil, pkg.NewError(pkg.BadRequest, "传入的events id有一部分不存在")
+		return nil, nil, pkg.NewError(pkg.BadRequest, "传入的events id有一部分不存在"), nil
 	}
 
 	if err != nil {
-		return nil, nil, pkg.NewError(pkg.ServerError, err.Error())
+		return nil, nil, pkg.NewError(pkg.ServerError, err.Error()), nil
 	}
-	return eventIDs, eventNames, nil
+	return eventIDs, eventNames, nil, events
 }
 
 func accountsLegitimate(db *gorm.DB, ids []string) *pkg.Error {
@@ -310,7 +349,9 @@ func fetchNewLog(r model.Record) int {
 			}
 
 			// 被测的events都记录在record的Events字段里
-			eventIDs, _ := pkg.Strs{}.Scan(r.Events)
+			//eventIDs, _ := pkg.Strs{}.Scan(r.Events)
+			es := model.Events(r.Events)
+			eventIDs, _ := es.ListEventID()
 			e := model.Event{}
 			events, _, _ := e.List(initializer.DB, eventIDs)
 
@@ -429,7 +470,9 @@ func testNewLog(count int, r model.Record) {
 
 func testEvent(eventLogs []model.EventLog, r model.Record) {
 	// 被测的events都记录在record的Events字段里
-	eventIDs, _ := pkg.Strs{}.Scan(r.Events)
+	//eventIDs, _ := pkg.Strs{}.Scan(r.Events)
+	es := model.Events(r.Events)
+	eventIDs, _ := es.ListEventID()
 	e := model.Event{}
 	events, _, _ := e.List(initializer.DB, eventIDs)
 

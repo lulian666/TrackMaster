@@ -149,7 +149,7 @@ func (h RealTimeHandler) Update(c *gin.Context) {
 // @Summery get log in record
 // @Produce json
 // @Param record query string true "record ID"
-// @Success 200 {object} object "成功"
+// @Success 200 {object} model.SwaggerEventLogs "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
 // @Router /api/v1/realTime/getLog [get]
@@ -205,8 +205,57 @@ func (h RealTimeHandler) ClearLog(c *gin.Context) {
 	res.ToResponse(nil)
 }
 
+// ResetResult
+// todo 或许这能改成update
+// @Tags realTime
+// @Summery reset test result in record
+// @Produce json
+// @Param record query string true "record ID"
+// @Param event query string true "event ID"
+// @Success 200 {object} object "成功"
+// @Failure 400 {object} pkg.Error "请求错误"
+// @Failure 500 {object} pkg.Error "内部错误"
+// @Router /api/v1/realTime/resetResult [post]
 func (h RealTimeHandler) ResetResult(c *gin.Context) {
 
+}
+
+// GetResult
+// @Tags realTime
+// @Summery get test result in record
+// @Produce json
+// @Param record query string true "record ID"
+// @Success 200 {object} model.SwaggerEvents "成功"
+// @Failure 400 {object} pkg.Error "请求错误"
+// @Failure 500 {object} pkg.Error "内部错误"
+// @Router /api/v1/realTime/getResult [get]
+func (h RealTimeHandler) GetResult(c *gin.Context) {
+	res := pkg.NewResponse(c)
+	recordID := c.Query("record")
+	if recordID == "" {
+		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "record required in query"))
+		return
+	}
+
+	r := model.Record{
+		ID: recordID,
+	}
+	events, totalRow, err := h.service.GetResult(&r)
+	if err != nil {
+		res.ToErrorResponse(err)
+	}
+
+	//var record model.Record
+	//
+	//initializer.DB.Preload("Events").
+	//	Joins("JOIN (SELECT MAX(id) as id, event_id FROM event_results GROUP BY event_id) er ON er.event_id = events.id").
+	//	Joins("LEFT JOIN field_results fr ON fr.result_id = er.id").
+	//	Joins("JOIN (SELECT MAX(id) as id, field_id FROM field_results GROUP BY field_id) fr2 ON fr2.field_id = fr.field_id AND fr2.id = fr.id").
+	//	Where("records.id = ?", recordID).
+	//	First(&record)
+
+	res.ToResponseList(events, totalRow)
+	//res.ToResponse(record)
 }
 
 func (h RealTimeHandler) Test(c *gin.Context) {

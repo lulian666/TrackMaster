@@ -287,6 +287,91 @@ const docTemplate = `{
                     "200": {
                         "description": "成功",
                         "schema": {
+                            "$ref": "#/definitions/model.SwaggerEventLogs"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/realTime/getResult": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "realTime"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "record ID",
+                        "name": "record",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerEvents"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/realTime/resetResult": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "realTime"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "record ID",
+                        "name": "record",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "event ID",
+                        "name": "event",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "成功",
+                        "schema": {
                             "type": "object"
                         }
                     },
@@ -673,6 +758,25 @@ const docTemplate = `{
                     "description": "这个字段暂时用不上",
                     "type": "boolean"
                 },
+                "recordIDs": {
+                    "description": "不要在数据库中保存这个字段",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "records": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Record"
+                    }
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EventResult"
+                    }
+                },
                 "storyID": {
                     "type": "string",
                     "maxLength": 32
@@ -744,6 +848,39 @@ const docTemplate = `{
                 }
             }
         },
+        "model.EventResult": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "android": {
+                    "$ref": "#/definitions/model.TestResult"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "eventID": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "ios": {
+                    "$ref": "#/definitions/model.TestResult"
+                },
+                "other": {
+                    "$ref": "#/definitions/model.TestResult"
+                },
+                "recordID": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Field": {
             "type": "object",
             "required": [
@@ -767,6 +904,12 @@ const docTemplate = `{
                 },
                 "key": {
                     "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.FieldResult"
+                    }
                 },
                 "type": {
                     "type": "string"
@@ -828,6 +971,39 @@ const docTemplate = `{
                 }
             }
         },
+        "model.FieldResult": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "android": {
+                    "$ref": "#/definitions/model.TestResult"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "fieldID": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "ios": {
+                    "$ref": "#/definitions/model.TestResult"
+                },
+                "other": {
+                    "$ref": "#/definitions/model.TestResult"
+                },
+                "recordID": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "model.Project": {
             "type": "object",
             "required": [
@@ -882,8 +1058,11 @@ const docTemplate = `{
                     }
                 },
                 "events": {
-                    "description": "存event的id数组",
-                    "type": "string"
+                    "description": "Events    string     ` + "`" + `json:\"events\"` + "`" + ` // 存event的id数组",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Event"
+                    }
                 },
                 "filter": {
                     "type": "string"
@@ -960,6 +1139,49 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "model.SwaggerEventLogs": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EventLog"
+                    }
+                },
+                "pager": {
+                    "$ref": "#/definitions/pkg.Pager"
+                }
+            }
+        },
+        "model.SwaggerEvents": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Event"
+                    }
+                },
+                "pager": {
+                    "$ref": "#/definitions/pkg.Pager"
+                }
+            }
+        },
+        "model.TestResult": {
+            "type": "string",
+            "enum": [
+                "SUCCESS",
+                "FAIL",
+                "UNCERTAIN",
+                "UNTESTED"
+            ],
+            "x-enum-varnames": [
+                "SUCCESS",
+                "FAIL",
+                "UNCERTAIN",
+                "UNTESTED"
+            ]
         },
         "model.status": {
             "type": "string",

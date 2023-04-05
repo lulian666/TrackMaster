@@ -1,6 +1,7 @@
 package model
 
 import (
+	"TrackMaster/pkg"
 	"gorm.io/gorm"
 	"time"
 )
@@ -22,6 +23,11 @@ type EventLog struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 
 	FieldLogs []FieldLog `gorm:"foreignKey:EventLogID"`
+}
+
+type SwaggerEventLogs struct {
+	Data  []*EventLog
+	Pager *pkg.Pager
 }
 
 func (e *EventLog) ListUnused(db *gorm.DB, recordID string) ([]EventLog, int64, error) {

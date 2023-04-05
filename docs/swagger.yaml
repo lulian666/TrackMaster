@@ -49,6 +49,19 @@ definitions:
       onTrail:
         description: 这个字段暂时用不上
         type: boolean
+      recordIDs:
+        description: 不要在数据库中保存这个字段
+        items:
+          type: string
+        type: array
+      records:
+        items:
+          $ref: '#/definitions/model.Record'
+        type: array
+      results:
+        items:
+          $ref: '#/definitions/model.EventResult'
+        type: array
       storyID:
         maxLength: 32
         type: string
@@ -104,6 +117,28 @@ definitions:
     - name
     - recordID
     type: object
+  model.EventResult:
+    properties:
+      android:
+        $ref: '#/definitions/model.TestResult'
+      createdAt:
+        type: string
+      eventID:
+        type: string
+      id:
+        maxLength: 32
+        type: string
+      ios:
+        $ref: '#/definitions/model.TestResult'
+      other:
+        $ref: '#/definitions/model.TestResult'
+      recordID:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - id
+    type: object
   model.Field:
     properties:
       createdAt:
@@ -118,6 +153,10 @@ definitions:
         type: string
       key:
         type: string
+      results:
+        items:
+          $ref: '#/definitions/model.FieldResult'
+        type: array
       type:
         type: string
       typeID:
@@ -163,6 +202,28 @@ definitions:
     - fieldID
     - id
     type: object
+  model.FieldResult:
+    properties:
+      android:
+        $ref: '#/definitions/model.TestResult'
+      createdAt:
+        type: string
+      fieldID:
+        type: string
+      id:
+        maxLength: 32
+        type: string
+      ios:
+        $ref: '#/definitions/model.TestResult'
+      other:
+        $ref: '#/definitions/model.TestResult'
+      recordID:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - id
+    type: object
   model.Project:
     properties:
       createdAt:
@@ -196,8 +257,10 @@ definitions:
           $ref: '#/definitions/model.EventLog'
         type: array
       events:
-        description: 存event的id数组
-        type: string
+        description: Events    string     `json:"events"` // 存event的id数组
+        items:
+          $ref: '#/definitions/model.Event'
+        type: array
       filter:
         type: string
       id:
@@ -255,6 +318,36 @@ definitions:
     - name
     - projectID
     type: object
+  model.SwaggerEventLogs:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.EventLog'
+        type: array
+      pager:
+        $ref: '#/definitions/pkg.Pager'
+    type: object
+  model.SwaggerEvents:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/model.Event'
+        type: array
+      pager:
+        $ref: '#/definitions/pkg.Pager'
+    type: object
+  model.TestResult:
+    enum:
+    - SUCCESS
+    - FAIL
+    - UNCERTAIN
+    - UNTESTED
+    type: string
+    x-enum-varnames:
+    - SUCCESS
+    - FAIL
+    - UNCERTAIN
+    - UNTESTED
   model.status:
     enum:
     - "ON"
@@ -455,6 +548,61 @@ paths:
       - description: record ID
         in: query
         name: record
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/model.SwaggerEventLogs'
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - realTime
+  /api/v1/realTime/getResult:
+    get:
+      parameters:
+      - description: record ID
+        in: query
+        name: record
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/model.SwaggerEvents'
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - realTime
+  /api/v1/realTime/resetResult:
+    post:
+      parameters:
+      - description: record ID
+        in: query
+        name: record
+        required: true
+        type: string
+      - description: event ID
+        in: query
+        name: event
         required: true
         type: string
       produces:

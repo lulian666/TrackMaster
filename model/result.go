@@ -1,6 +1,11 @@
 package model
 
-import "database/sql/driver"
+import (
+	"TrackMaster/pkg"
+	"database/sql/driver"
+	"gorm.io/gorm"
+	"time"
+)
 
 type TestResult string
 
@@ -24,18 +29,27 @@ type Result struct {
 	IOS     TestResult `sql:"type:ENUM('SUCCESS', 'FAIL', 'UNCERTAIN', 'UNTESTED')" gorm:"default:UNTESTED" json:"ios"`
 	Android TestResult `sql:"type:ENUM('SUCCESS', 'FAIL', 'UNCERTAIN', 'UNTESTED')" gorm:"default:UNTESTED" json:"android"`
 	Other   TestResult `sql:"type:ENUM('SUCCESS', 'FAIL', 'UNCERTAIN', 'UNTESTED')" gorm:"default:UNTESTED" json:"other"`
+
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
 
 type EventResult struct {
 	Result
-	RecordID string `gorm:"not null" json:"recordID"`
-	EventID  string `gorm:"not null" json:"eventID"`
+	RecordID string `gorm:"index;not null" json:"recordID"`
+	EventID  string `gorm:"index;not null" json:"eventID"`
 	ID       string `gorm:"type:varchar(191);primaryKey" json:"id" binding:"required,max=32"`
 }
 
 type FieldResult struct {
 	Result
-	RecordID string `gorm:"not null" json:"recordID"`
-	FieldID  string `gorm:"not null" json:"fieldID"`
+	RecordID string `gorm:"index;not null" json:"recordID"`
+	FieldID  string `gorm:"index;not null" json:"fieldID"`
 	ID       string `gorm:"type:varchar(191);primaryKey" json:"id" binding:"required,max=32"`
+}
+
+type EventResults []EventResult
+
+func (ers *EventResults) Get(db *gorm.DB, r Record, events []Event) *pkg.Error {
+	return nil
 }

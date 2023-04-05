@@ -17,6 +17,7 @@ func AddRealTimeRoutes(g *gin.RouterGroup) {
 	g.GET("/realTime/getLog", realTimeHandler.GetLog)
 	g.POST("/realTime/clearLog", realTimeHandler.ClearLog)
 	g.POST("/realTime/resetResult", realTimeHandler.ResetResult)
+	g.GET("/realTime/getResult", realTimeHandler.GetResult)
 
 	//测试
 	g.POST("/realTime/test", realTimeHandler.Test)

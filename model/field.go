@@ -1,6 +1,7 @@
 package model
 
 import (
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -14,6 +15,22 @@ type Field struct {
 	Description string    `json:"description"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+
+	Results []FieldResult `gorm:"foreignKey:FieldID"`
+}
+
+func (f *Field) ListWithNewestResult(db *gorm.DB, fieldIDs []string, recordID string) ([]Field, int64, error) {
+	var fields []Field
+	result := db.Model(f).Preload("Results", func(db *gorm.DB) *gorm.DB {
+		return db.Where("record_id = ?", recordID).Order("created_at desc").Limit(1)
+	}).Where("id in (?)", fieldIDs).Find(&fields)
+
+	if result.Error != nil {
+		return nil, 0, result.Error
+	}
+
+	totalRow := result.RowsAffected
+	return fields, totalRow, nil
 }
 
 type Fields []Field

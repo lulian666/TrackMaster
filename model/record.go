@@ -28,7 +28,9 @@ type Record struct {
 	Status status `sql:"type:ENUM('ON', 'OFF')"  json:"status"`
 	Filter string `gorm:"unique" json:"filter"`
 
-	Events    string     `json:"events"` // 存event的id数组
+	//Events    string     `json:"events"` // 存event的id数组
+	Events []Event `gorm:"many2many:record_events;"`
+
 	EventLogs []EventLog `gorm:"foreignKey:RecordID" json:"eventLogs"`
 	ProjectID string     `gorm:"index;not null" json:"projectID" binding:"required,max=32"`
 
@@ -42,7 +44,7 @@ func (r *Record) Create(db *gorm.DB) error {
 }
 
 func (r *Record) Get(db *gorm.DB) error {
-	result := db.Preload("EventLogs.FieldLogs").First(&r)
+	result := db.Preload("EventLogs.FieldLogs").Preload("Events").First(&r)
 	return result.Error
 }
 
