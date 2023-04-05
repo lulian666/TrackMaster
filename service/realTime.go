@@ -8,7 +8,6 @@ import (
 	"TrackMaster/third_party/jet"
 	"TrackMaster/third_party/podcast"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -54,12 +53,12 @@ func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
 	p := model.Project{
 		ID: req.Project,
 	}
-	err1 := p.Get(s.db)
-	if err1 != nil {
-		if errors.Is(err1, gorm.ErrRecordNotFound) {
+	err = p.Get(s.db)
+	if err != nil {
+		if strings.Contains(err.Msg, "record not found") {
 			return model.Record{}, pkg.NewError(pkg.BadRequest, "project does not exist")
 		}
-		return model.Record{}, pkg.NewError(pkg.ServerError, err1.Error())
+		return model.Record{}, err
 	}
 
 	// 创建filter
@@ -68,9 +67,9 @@ func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
 		Project: p.ID,
 		UserIDs: req.AccountIDs,
 	}
-	filterRes, err1 := filter.Create()
-	if err1 != nil {
-		return model.Record{}, pkg.NewError(pkg.ServerError, err1.Error())
+	filterRes, err := filter.Create()
+	if err != nil {
+		return model.Record{}, err
 	}
 
 	if filterRes.Status != "READY" {
@@ -79,9 +78,9 @@ func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
 
 	filter.ID = filterRes.ID
 	filter.Status = jet.RECORDING
-	err1 = filter.Update()
-	if err1 != nil {
-		return model.Record{}, pkg.NewError(pkg.ServerError, err1.Error())
+	err = filter.Update()
+	if err != nil {
+		return model.Record{}, err
 	}
 
 	// 创建record
@@ -98,9 +97,9 @@ func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
 		//Events:    eventsValue,
 		Events: events,
 	}
-	err1 = r.Create(s.db)
-	if err1 != nil {
-		return r, pkg.NewError(pkg.ServerError, err1.Error())
+	err = r.Create(s.db)
+	if err != nil {
+		return r, err
 	}
 
 	// todo 创建存log和测log的任务
@@ -116,10 +115,10 @@ func (s realTimeService) Start(req request.Start) (model.Record, *pkg.Error) {
 func (s realTimeService) Stop(r *model.Record) *pkg.Error {
 	err := r.Update(s.db)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if strings.Contains(err.Msg, "record not found") {
 			return pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
 		}
-		return pkg.NewError(pkg.ServerError, err.Error())
+		return err
 	}
 
 	filter := jet.Filter{
@@ -164,9 +163,9 @@ func (s realTimeService) Update(r *model.Record, req request.Update) *pkg.Error 
 		filter.UserIDs = req.AccountIDs
 	}
 
-	err1 := filter.Update()
-	if err1 != nil {
-		return pkg.NewError(pkg.ServerError, err1.Error())
+	err = filter.Update()
+	if err != nil {
+		return err
 	}
 
 	result := s.db.Save(&r)
@@ -182,10 +181,10 @@ func (s realTimeService) GetLog(r *model.Record) ([]model.EventLog, int64, *pkg.
 	logs, totalRow, err := el.ListUnused(s.db, r.ID)
 
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if strings.Contains(err.Msg, "record not found") {
 			return nil, 0, pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
 		}
-		return nil, 0, pkg.NewError(pkg.ServerError, err.Error())
+		return nil, 0, err
 	}
 
 	return logs, totalRow, nil
@@ -198,9 +197,9 @@ func (s realTimeService) ClearLog(r *model.Record) *pkg.Error {
 	}
 
 	eventLogs := r.EventLogs
-	err1 := model.EventLogs(eventLogs).UpdateToUsed(s.db)
-	if err1 != nil {
-		return pkg.NewError(pkg.ServerError, err1.Error())
+	err = model.EventLogs(eventLogs).UpdateToUsed(s.db)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -236,12 +235,11 @@ func (s realTimeService) GetResult(r *model.Record) ([]model.Event, int64, *pkg.
 	//eventIDs, _ := pkg.Strs{}.Scan(r.Events)
 	es := model.Events(r.Events)
 
-	fmt.Println("events 数量：", len(r.Events))
 	eventIDs, _ := es.ListEventID()
-	events, totalRow, err1 := e.ListWithNewestResult(s.db, eventIDs, r.ID)
+	events, totalRow, err := e.ListWithNewestResult(s.db, eventIDs, r.ID)
 
-	if err1 != nil {
-		return nil, 0, pkg.NewError(pkg.ServerError, err.Error())
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return events, totalRow, nil
@@ -250,10 +248,10 @@ func (s realTimeService) GetResult(r *model.Record) ([]model.Event, int64, *pkg.
 func (s realTimeService) recordExist(r *model.Record) *pkg.Error {
 	err := r.Get(s.db)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if strings.Contains(err.Msg, "record not found") {
 			return pkg.NewError(pkg.NotFound, fmt.Sprintf("record with id %s not found", r.ID))
 		}
-		return pkg.NewError(pkg.ServerError, err.Error())
+		return err
 	}
 	return nil
 }
@@ -267,6 +265,10 @@ func (s realTimeService) Test(r model.Record) {
 func eventsLegitimate(db *gorm.DB, ids []string) ([]string, []string, *pkg.Error, []model.Event) {
 	e := model.Event{}
 	events, totalRow, err := e.List(db, ids)
+	if err != nil {
+		return nil, nil, pkg.NewError(pkg.ServerError, err.Error()), nil
+	}
+
 	eventNames := make([]string, len(events))
 	for _, event := range events {
 		eventNames = append(eventNames, event.Name)
@@ -285,9 +287,6 @@ func eventsLegitimate(db *gorm.DB, ids []string) ([]string, []string, *pkg.Error
 		return nil, nil, pkg.NewError(pkg.BadRequest, "传入的events id有一部分不存在"), nil
 	}
 
-	if err != nil {
-		return nil, nil, pkg.NewError(pkg.ServerError, err.Error()), nil
-	}
 	return eventIDs, eventNames, nil, events
 }
 
@@ -300,7 +299,7 @@ func accountsLegitimate(db *gorm.DB, ids []string) *pkg.Error {
 	}
 
 	if err != nil {
-		return pkg.NewError(pkg.ServerError, err.Error())
+		return err
 	}
 	return nil
 }

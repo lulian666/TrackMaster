@@ -5,9 +5,8 @@ import (
 	"TrackMaster/model/request"
 	"TrackMaster/pkg"
 	"TrackMaster/service"
-	"errors"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"strings"
 )
 
 type RealTimeHandler struct {
@@ -31,7 +30,7 @@ func NewRealTimeHandler(s service.RealTimeService) RealTimeHandler {
 // @Success 200 {object} model.Record "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/realTime/start [post]
+// @Router /api/v2/realTime/start [post]
 func (h RealTimeHandler) Start(c *gin.Context) {
 	res := pkg.NewResponse(c)
 
@@ -54,7 +53,7 @@ func (h RealTimeHandler) Start(c *gin.Context) {
 
 	record, err1 := h.service.Start(req)
 	if err1 != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if strings.Contains(err1.Msg, "record not found") {
 			res.ToErrorResponse(pkg.NewError(pkg.NotFound, err.Error()))
 			return
 		}
@@ -74,7 +73,7 @@ func (h RealTimeHandler) Start(c *gin.Context) {
 // @Success 200 {object} model.Record "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/realTime/stop [post]
+// @Router /api/v2/realTime/stop [post]
 func (h RealTimeHandler) Stop(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	recordID := c.Query("record")
@@ -106,7 +105,7 @@ func (h RealTimeHandler) Stop(c *gin.Context) {
 // @Success 200 {object} model.Record "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/realTime/update [post]
+// @Router /api/v2/realTime/update [post]
 func (h RealTimeHandler) Update(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	recordID := c.Query("record")
@@ -121,16 +120,6 @@ func (h RealTimeHandler) Update(c *gin.Context) {
 		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, err.Error()))
 		return
 	}
-
-	//if len(req.EventIDs) == 0 {
-	//	res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个event"))
-	//	return
-	//}
-	//
-	//if len(req.AccountIDs) == 0 {
-	//	res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个account"))
-	//	return
-	//}
 
 	r := model.Record{
 		ID: recordID,
@@ -152,7 +141,7 @@ func (h RealTimeHandler) Update(c *gin.Context) {
 // @Success 200 {object} model.SwaggerEventLogs "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/realTime/getLog [get]
+// @Router /api/v2/realTime/getLog [get]
 func (h RealTimeHandler) GetLog(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	recordID := c.Query("record")
@@ -183,7 +172,7 @@ func (h RealTimeHandler) GetLog(c *gin.Context) {
 // @Success 200 {object} object "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/realTime/clearLog [post]
+// @Router /api/v2/realTime/clearLog [post]
 func (h RealTimeHandler) ClearLog(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	recordID := c.Query("record")
@@ -214,7 +203,7 @@ func (h RealTimeHandler) ClearLog(c *gin.Context) {
 // @Success 200 {object} object "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/realTime/updateResult [post]
+// @Router /api/v2/realTime/updateResult [post]
 func (h RealTimeHandler) UpdateResult(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	req := request.UpdateResult{}
@@ -224,9 +213,9 @@ func (h RealTimeHandler) UpdateResult(c *gin.Context) {
 		return
 	}
 
-	err = h.service.UpdateResult(req)
-	if err != nil {
-		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, err.Error()))
+	err1 := h.service.UpdateResult(req)
+	if err1 != nil {
+		res.ToErrorResponse(err1)
 		return
 	}
 	res.ToResponse(nil)
@@ -240,7 +229,7 @@ func (h RealTimeHandler) UpdateResult(c *gin.Context) {
 // @Success 200 {object} model.SwaggerEvents "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/realTime/getResult [get]
+// @Router /api/v2/realTime/getResult [get]
 func (h RealTimeHandler) GetResult(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	recordID := c.Query("record")
@@ -255,6 +244,7 @@ func (h RealTimeHandler) GetResult(c *gin.Context) {
 	events, totalRow, err := h.service.GetResult(&r)
 	if err != nil {
 		res.ToErrorResponse(err)
+		return
 	}
 
 	res.ToResponseList(events, totalRow)

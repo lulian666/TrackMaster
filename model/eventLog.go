@@ -30,11 +30,11 @@ type SwaggerEventLogs struct {
 	Pager *pkg.Pager
 }
 
-func (e *EventLog) ListUnused(db *gorm.DB, recordID string) ([]EventLog, int64, error) {
+func (e *EventLog) ListUnused(db *gorm.DB, recordID string) ([]EventLog, int64, *pkg.Error) {
 	var eventLogs []EventLog
 	result := db.Preload("FieldLogs").Where("record_id = ?", recordID).Where("used = ?", false).Order("created_at desc").Find(&eventLogs)
 	if result.Error != nil {
-		return nil, 0, result.Error
+		return nil, 0, pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 
 	totalRow := result.RowsAffected
@@ -43,7 +43,10 @@ func (e *EventLog) ListUnused(db *gorm.DB, recordID string) ([]EventLog, int64, 
 
 type EventLogs []EventLog
 
-func (e EventLogs) UpdateToUsed(db *gorm.DB) error {
+func (e EventLogs) UpdateToUsed(db *gorm.DB) *pkg.Error {
 	result := db.Save(e).Update("used", true)
-	return result.Error
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
 }

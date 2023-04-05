@@ -379,9 +379,9 @@ definitions:
 info:
   contact: {}
   title: TrackMaster
-  version: "1.0"
+  version: "2.0"
 paths:
-  /api/v1/accounts:
+  /api/v2/accounts:
     get:
       parameters:
       - description: page
@@ -395,6 +395,11 @@ paths:
       - description: description
         in: query
         name: description
+        type: string
+      - description: project id
+        in: query
+        name: project
+        required: true
         type: string
       produces:
       - application/json
@@ -452,7 +457,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - account
-  /api/v1/accounts/{id}:
+  /api/v2/accounts/{id}:
     delete:
       parameters:
       - description: account id
@@ -477,7 +482,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - account
-  /api/v1/projects:
+  /api/v2/projects:
     get:
       produces:
       - application/json
@@ -498,7 +503,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - project
-  /api/v1/projects/sync:
+  /api/v2/projects/sync:
     post:
       produces:
       - application/json
@@ -517,7 +522,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - project
-  /api/v1/realTime/clearLog:
+  /api/v2/realTime/clearLog:
     post:
       parameters:
       - description: record ID
@@ -542,7 +547,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - realTime
-  /api/v1/realTime/getLog:
+  /api/v2/realTime/getLog:
     get:
       parameters:
       - description: record ID
@@ -567,7 +572,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - realTime
-  /api/v1/realTime/getResult:
+  /api/v2/realTime/getResult:
     get:
       parameters:
       - description: record ID
@@ -592,7 +597,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - realTime
-  /api/v1/realTime/start:
+  /api/v2/realTime/start:
     post:
       parameters:
       - description: project ID
@@ -634,7 +639,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - realTime
-  /api/v1/realTime/stop:
+  /api/v2/realTime/stop:
     post:
       parameters:
       - description: record ID
@@ -659,7 +664,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - realTime
-  /api/v1/realTime/update:
+  /api/v2/realTime/update:
     post:
       parameters:
       - description: record ID
@@ -698,7 +703,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - realTime
-  /api/v1/realTime/updateResult:
+  /api/v2/realTime/updateResult:
     post:
       parameters:
       - description: record ID
@@ -732,14 +737,14 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - realTime
-  /api/v1/stories:
+  /api/v2/stories:
     get:
       parameters:
-      - description: page
+      - description: page, default 10
         in: query
         name: page
         type: string
-      - description: page size
+      - description: page size, default 10
         in: query
         name: pageSize
         type: string
@@ -760,7 +765,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - story
-  /api/v1/stories/{id}:
+  /api/v2/stories/{id}:
     get:
       parameters:
       - description: story id
@@ -785,7 +790,7 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - story
-  /api/v1/stories/sync:
+  /api/v2/stories/sync:
     post:
       parameters:
       - description: project id

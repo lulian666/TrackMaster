@@ -28,7 +28,7 @@ func NewAccountHandler(s service.AccountService) AccountHandler {
 // @Success 200 {array} model.Account "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/accounts [post]
+// @Router /api/v2/accounts [post]
 func (h AccountHandler) Create(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	a := model.Account{}
@@ -38,9 +38,9 @@ func (h AccountHandler) Create(c *gin.Context) {
 		return
 	}
 
-	err = h.service.CreateAccount(&a)
-	if err != nil {
-		res.ToErrorResponse(pkg.NewError(pkg.ServerError, err.Error()))
+	err1 := h.service.CreateAccount(&a)
+	if err1 != nil {
+		res.ToErrorResponse(err1)
 		return
 	}
 
@@ -54,15 +54,26 @@ func (h AccountHandler) Create(c *gin.Context) {
 // @Param page query string false "page"
 // @Param pageSize query string false "page size"
 // @Param description query string false "description"
+// @Param project query string true "project id"
 // @Success 200 {object} model.Accounts "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/accounts [get]
+// @Router /api/v2/accounts [get]
 func (h AccountHandler) List(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	pager := pkg.Pager{
 		Page:     pkg.GetPage(c),
 		PageSize: pkg.GetPageSize(c),
+	}
+
+	projectID := c.Query("project")
+	if projectID == "" {
+		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "project required in query"))
+		return
+	}
+
+	p := model.Project{
+		ID: projectID,
 	}
 
 	// 如果是一个带query的查询
@@ -71,9 +82,9 @@ func (h AccountHandler) List(c *gin.Context) {
 		Description: desc,
 	}
 
-	accounts, totalRow, err := h.service.ListAccount(&a, pager)
+	accounts, totalRow, err := h.service.ListAccount(&p, &a, pager)
 	if err != nil {
-		res.ToErrorResponse(pkg.NewError(pkg.ServerError, err.Error()))
+		res.ToErrorResponse(err)
 		return
 	}
 	res.ToResponseList(accounts, totalRow)
@@ -87,7 +98,7 @@ func (h AccountHandler) List(c *gin.Context) {
 // @Success 200 {object} object "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/accounts/{id} [delete]
+// @Router /api/v2/accounts/{id} [delete]
 func (h AccountHandler) Delete(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	id := c.Param("id")
@@ -96,7 +107,7 @@ func (h AccountHandler) Delete(c *gin.Context) {
 	}
 	err := h.service.DeleteAccount(&account)
 	if err != nil {
-		res.ToErrorResponse(pkg.NewError(pkg.ServerError, err.Error()))
+		res.ToErrorResponse(err)
 		return
 	}
 

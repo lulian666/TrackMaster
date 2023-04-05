@@ -14,24 +14,27 @@ type Account struct {
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
 
-func (a *Account) Create(db *gorm.DB) error {
+func (a *Account) Create(db *gorm.DB) *pkg.Error {
 	result := db.Create(a)
-	return result.Error
-}
-
-func (a *Account) Get(db *gorm.DB) error {
-	result := db.First(&a)
 	if result.Error != nil {
-		return result.Error
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 	return nil
 }
 
-func (a *Account) List(db *gorm.DB, pageOffset, pageSize int) ([]Account, int64, error) {
-	var accounts []Account
-	result := db.Find(&accounts)
+func (a *Account) Get(db *gorm.DB) *pkg.Error {
+	result := db.First(&a)
 	if result.Error != nil {
-		return nil, 0, result.Error
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
+}
+
+func (a *Account) List(db *gorm.DB, project *Project, pageOffset, pageSize int) ([]Account, int64, *pkg.Error) {
+	var accounts []Account
+	result := db.Where("project_id = ?", project.ID).Find(&accounts)
+	if result.Error != nil {
+		return nil, 0, pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 
 	if pageOffset >= 0 && pageSize > 0 {
@@ -47,12 +50,12 @@ func (a *Account) List(db *gorm.DB, pageOffset, pageSize int) ([]Account, int64,
 	return accounts, totalRow, nil
 }
 
-func (a *Account) GetSome(db *gorm.DB, accountIDs []string) ([]Account, int64, error) {
+func (a *Account) GetSome(db *gorm.DB, accountIDs []string) ([]Account, int64, *pkg.Error) {
 	var accounts []Account
 	result := db.Model(a).Where("id in (?)", accountIDs).Find(&accounts)
 
 	if result.Error != nil {
-		return nil, 0, result.Error
+		return nil, 0, pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 
 	totalRow := result.RowsAffected
@@ -60,9 +63,12 @@ func (a *Account) GetSome(db *gorm.DB, accountIDs []string) ([]Account, int64, e
 	return accounts, totalRow, nil
 }
 
-func (a *Account) Delete(db *gorm.DB) error {
+func (a *Account) Delete(db *gorm.DB) *pkg.Error {
 	result := db.Delete(&a)
-	return result.Error
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
 }
 
 type Accounts struct {

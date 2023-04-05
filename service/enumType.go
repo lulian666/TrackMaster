@@ -2,12 +2,13 @@ package service
 
 import (
 	"TrackMaster/model"
+	"TrackMaster/pkg"
 	"TrackMaster/third_party/jet"
 	"gorm.io/gorm"
 )
 
 type EnumTypeService interface {
-	SyncEnumType(p *model.Project) error
+	SyncEnumType(p *model.Project) *pkg.Error
 }
 
 type enumTypeService struct {
@@ -18,7 +19,7 @@ func NewEnumTypeService(db *gorm.DB) EnumTypeService {
 	return &enumTypeService{db: db}
 }
 
-func (s enumTypeService) SyncEnumType(p *model.Project) error {
+func (s enumTypeService) SyncEnumType(p *model.Project) *pkg.Error {
 	// project 是否存在
 	err := p.Get(s.db)
 	if err != nil {
@@ -100,7 +101,7 @@ func (s enumTypeService) SyncEnumType(p *model.Project) error {
 		if len(updateList) > 0 {
 			result := s.db.Save(updateList)
 			if result.Error != nil {
-				return err
+				return pkg.NewError(pkg.ServerError, result.Error.Error())
 			}
 		}
 
@@ -108,7 +109,7 @@ func (s enumTypeService) SyncEnumType(p *model.Project) error {
 		if len(createList) > 0 {
 			result := s.db.Create(createList)
 			if result.Error != nil {
-				return err
+				return pkg.NewError(pkg.ServerError, result.Error.Error())
 			}
 		}
 	}

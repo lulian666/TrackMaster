@@ -1,6 +1,7 @@
 package podcast
 
 import (
+	"TrackMaster/pkg"
 	"TrackMaster/third_party"
 	"encoding/json"
 	"strings"
@@ -30,7 +31,7 @@ var podcastFetcher = &third_party.ThirdPartyDataFetcher{
 	OnError: onError,
 }
 
-func GetPodcast(pid string) (Content, error) {
+func GetPodcast(pid string) (Content, *pkg.Error) {
 	query := make(map[string][]string)
 	query["pid"] = []string{pid}
 
@@ -41,9 +42,9 @@ func GetPodcast(pid string) (Content, error) {
 	}
 
 	response := contentResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return Content{}, err
+	err1 := json.Unmarshal(body, &response)
+	if err1 != nil {
+		return Content{}, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	// 有的内容太长了
@@ -61,7 +62,7 @@ var episodeFetcher = &third_party.ThirdPartyDataFetcher{
 	OnError: onError,
 }
 
-func GetEpisode(eid string) (Content, error) {
+func GetEpisode(eid string) (Content, *pkg.Error) {
 	query := make(map[string][]string)
 	query["eid"] = []string{eid}
 
@@ -72,9 +73,9 @@ func GetEpisode(eid string) (Content, error) {
 	}
 
 	response := contentResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return Content{}, err
+	err1 := json.Unmarshal(body, &response)
+	if err1 != nil {
+		return Content{}, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	if len(response.Data.Desc) > 20 {
@@ -91,7 +92,7 @@ var collectionFetcher = &third_party.ThirdPartyDataFetcher{
 	OnError: onError,
 }
 
-func GetCollection(id string) (Content, error) {
+func GetCollection(id string) (Content, *pkg.Error) {
 	query := make(map[string][]string)
 	query["id"] = []string{id}
 
@@ -102,9 +103,9 @@ func GetCollection(id string) (Content, error) {
 	}
 
 	response := contentResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return Content{}, err
+	err1 := json.Unmarshal(body, &response)
+	if err1 != nil {
+		return Content{}, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	if len(response.Data.Desc) > 20 {
@@ -114,7 +115,7 @@ func GetCollection(id string) (Content, error) {
 	return response.Data, nil
 }
 
-func GetContentByTypeAndID(t string, id string) (Content, error) {
+func GetContentByTypeAndID(t string, id string) (Content, *pkg.Error) {
 	switch strings.ToLower(t) {
 	case "collection":
 		return GetCollection(id)

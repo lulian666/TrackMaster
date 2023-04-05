@@ -16,11 +16,11 @@ type Story struct {
 	Events      []Event   `gorm:"foreignKey:StoryID"`
 }
 
-func (s *Story) List(db *gorm.DB, pageOffset, pageSize int) ([]Story, int64, error) {
+func (s *Story) List(db *gorm.DB, pageOffset, pageSize int) ([]Story, int64, *pkg.Error) {
 	var stories []Story
 	result := db.Where("project_id = ?", s.ProjectID).Find(&stories)
 	if result.Error != nil {
-		return nil, 0, result.Error
+		return nil, 0, pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 
 	if pageOffset >= 0 && pageSize > 0 {
@@ -33,10 +33,10 @@ func (s *Story) List(db *gorm.DB, pageOffset, pageSize int) ([]Story, int64, err
 	return stories, totalRow, nil
 }
 
-func (s *Story) Get(db *gorm.DB) error {
+func (s *Story) Get(db *gorm.DB) *pkg.Error {
 	result := db.Preload("Events.Fields").Where("id = ?", s.ID).First(&s)
 	if result.Error != nil {
-		return result.Error
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 	return nil
 }

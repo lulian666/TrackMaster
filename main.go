@@ -4,7 +4,6 @@ import (
 	_ "TrackMaster/docs"
 	"TrackMaster/initializer"
 	"TrackMaster/router"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -19,9 +18,8 @@ func init() {
 
 // main
 // @title TrackMaster
-// @version 1.0
+// @version 2.0
 func main() {
-	fmt.Println("hello")
 	r := router.NewRouter()
 
 	r.GET("/ping", func(c *gin.Context) {

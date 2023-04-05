@@ -26,19 +26,19 @@ type SwaggerEvents struct {
 	Pager *pkg.Pager
 }
 
-func (e *Event) List(db *gorm.DB, eventIDs []string) ([]Event, int64, error) {
+func (e *Event) List(db *gorm.DB, eventIDs []string) ([]Event, int64, *pkg.Error) {
 	var events []Event
 	result := db.Model(Event{}).Preload("Fields").Where("id in (?)", eventIDs).Find(&events)
 
 	if result.Error != nil {
-		return nil, 0, result.Error
+		return nil, 0, pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 
 	totalRow := result.RowsAffected
 	return events, totalRow, nil
 }
 
-func (e *Event) ListWithNewestResult(db *gorm.DB, eventIDs []string, recordID string) ([]Event, int64, error) {
+func (e *Event) ListWithNewestResult(db *gorm.DB, eventIDs []string, recordID string) ([]Event, int64, *pkg.Error) {
 	var events []Event
 	result := db.Model(e).Preload("Fields.Results", func(db *gorm.DB) *gorm.DB {
 		return db.Where("record_id = ?", recordID).Order("created_at desc")
@@ -50,12 +50,12 @@ func (e *Event) ListWithNewestResult(db *gorm.DB, eventIDs []string, recordID st
 	return events, totalRow, nil
 }
 
-func (e *Event) ListEventName(db *gorm.DB, eventIDs []string) ([]string, int64, error) {
+func (e *Event) ListEventName(db *gorm.DB, eventIDs []string) ([]string, int64, *pkg.Error) {
 	var events []string
 	result := db.Model(e).Where("id in (?)", eventIDs).Pluck("name", &events)
 
 	if result.Error != nil {
-		return nil, 0, result.Error
+		return nil, 0, pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 
 	totalRow := result.RowsAffected
@@ -73,7 +73,7 @@ func (es Events) FindByID(id string) (Event, bool) {
 	return Event{}, false
 }
 
-func (es Events) ListEventID() ([]string, error) {
+func (es Events) ListEventID() ([]string, *pkg.Error) {
 	eventIDs := make([]string, 0, len(es))
 	for i := range es {
 		eventIDs = append(eventIDs, es[i].ID)

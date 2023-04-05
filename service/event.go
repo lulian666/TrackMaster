@@ -9,7 +9,7 @@ import (
 )
 
 type EventService interface {
-	SyncEvent(story model.Story) error
+	SyncEvent(story model.Story) *pkg.Error
 }
 
 type eventService struct {
@@ -20,7 +20,7 @@ func NewEventService(db *gorm.DB) EventService {
 	return &eventService{db: db}
 }
 
-func (s eventService) SyncEvent(story model.Story) error {
+func (s eventService) SyncEvent(story model.Story) *pkg.Error {
 	events, err := jet.GetEvents(story.ID)
 	if err != nil {
 		return err
@@ -116,14 +116,14 @@ func (s eventService) SyncEvent(story model.Story) error {
 	if len(eventUpdateList) > 0 {
 		result := s.db.Save(eventUpdateList)
 		if result.Error != nil {
-			return result.Error
+			return pkg.NewError(pkg.ServerError, result.Error.Error())
 		}
 	}
 
 	if len(eventCreateList) > 0 {
 		result := s.db.Create(eventCreateList)
 		if result.Error != nil {
-			return result.Error
+			return pkg.NewError(pkg.ServerError, result.Error.Error())
 		}
 	}
 
@@ -131,7 +131,7 @@ func (s eventService) SyncEvent(story model.Story) error {
 	if len(fieldUpdateList) > 0 {
 		result := s.db.Save(fieldUpdateList)
 		if result.Error != nil {
-			return result.Error
+			return pkg.NewError(pkg.ServerError, result.Error.Error())
 		}
 	}
 
@@ -139,7 +139,7 @@ func (s eventService) SyncEvent(story model.Story) error {
 	if len(fieldCreateList) > 0 {
 		result := s.db.Create(fieldCreateList)
 		if result.Error != nil {
-			return result.Error
+			return pkg.NewError(pkg.ServerError, result.Error.Error())
 		}
 	}
 	return nil
@@ -155,7 +155,7 @@ func anyDifference(existingF model.Field, f jet.Field) bool {
 	return false
 }
 
-func locateValue(field jet.Field, db *gorm.DB) ([]string, error) {
+func locateValue(field jet.Field, db *gorm.DB) ([]string, *pkg.Error) {
 	if len(field.Values) > 0 {
 		// 根据type id和id去拿值
 		values := make([]string, 0, len(field.Values))
@@ -163,7 +163,7 @@ func locateValue(field jet.Field, db *gorm.DB) ([]string, error) {
 			value := model.EnumValue{}
 			result := db.Where("type_id = ?", field.Type.ID).Where("id = ?", v).Find(&value)
 			if result.Error != nil {
-				return nil, result.Error
+				return nil, pkg.NewError(pkg.ServerError, result.Error.Error())
 			}
 			if value.ID != "" {
 				values = append(values, value.Name)

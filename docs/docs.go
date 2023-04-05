@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/accounts": {
+        "/api/v2/accounts": {
             "get": {
                 "produces": [
                     "application/json"
@@ -41,6 +41,13 @@ const docTemplate = `{
                         "description": "description",
                         "name": "description",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "project id",
+                        "name": "project",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -125,7 +132,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/accounts/{id}": {
+        "/api/v2/accounts/{id}": {
             "delete": {
                 "produces": [
                     "application/json"
@@ -164,7 +171,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/projects": {
+        "/api/v2/projects": {
             "get": {
                 "produces": [
                     "application/json"
@@ -197,7 +204,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/projects/sync": {
+        "/api/v2/projects/sync": {
             "post": {
                 "produces": [
                     "application/json"
@@ -227,7 +234,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/realTime/clearLog": {
+        "/api/v2/realTime/clearLog": {
             "post": {
                 "produces": [
                     "application/json"
@@ -266,7 +273,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/realTime/getLog": {
+        "/api/v2/realTime/getLog": {
             "get": {
                 "produces": [
                     "application/json"
@@ -305,7 +312,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/realTime/getResult": {
+        "/api/v2/realTime/getResult": {
             "get": {
                 "produces": [
                     "application/json"
@@ -344,7 +351,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/realTime/start": {
+        "/api/v2/realTime/start": {
             "post": {
                 "produces": [
                     "application/json"
@@ -409,7 +416,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/realTime/stop": {
+        "/api/v2/realTime/stop": {
             "post": {
                 "produces": [
                     "application/json"
@@ -448,7 +455,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/realTime/update": {
+        "/api/v2/realTime/update": {
             "post": {
                 "produces": [
                     "application/json"
@@ -509,7 +516,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/realTime/updateResult": {
+        "/api/v2/realTime/updateResult": {
             "post": {
                 "produces": [
                     "application/json"
@@ -562,7 +569,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/stories": {
+        "/api/v2/stories": {
             "get": {
                 "produces": [
                     "application/json"
@@ -573,13 +580,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "page",
+                        "description": "page, default 10",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "page size",
+                        "description": "page size, default 10",
                         "name": "pageSize",
                         "in": "query"
                     }
@@ -606,7 +613,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/stories/sync": {
+        "/api/v2/stories/sync": {
             "post": {
                 "produces": [
                     "application/json"
@@ -648,7 +655,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/stories/{id}": {
+        "/api/v2/stories/{id}": {
             "get": {
                 "produces": [
                     "application/json"
@@ -1237,7 +1244,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "2.0",
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},

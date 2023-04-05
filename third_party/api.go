@@ -1,6 +1,7 @@
 package third_party
 
 import (
+	"TrackMaster/pkg"
 	"bytes"
 	"fmt"
 	"io"
@@ -21,11 +22,11 @@ type ThirdPartyDataFetcher struct {
 	OnError func() ([]byte, error)
 }
 
-func (f *ThirdPartyDataFetcher) FetchData(params string) ([]byte, error) {
+func (f *ThirdPartyDataFetcher) FetchData(params string) ([]byte, *pkg.Error) {
 	// 构造URL
 	u, err := url.Parse(f.Host + f.Path)
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	// 添加param
@@ -45,7 +46,7 @@ func (f *ThirdPartyDataFetcher) FetchData(params string) ([]byte, error) {
 	// 发送请求
 	resp, err := http.Get(u.String())
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, "something went wrong with third party api").WithDetails(err.Error())
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -61,22 +62,22 @@ func (f *ThirdPartyDataFetcher) FetchData(params string) ([]byte, error) {
 			if r, err := f.OnError(); err == nil {
 				return r, nil
 			}
-			return nil, fmt.Errorf("failed to fetch data, status code: %d \nrequest url is %s", resp.StatusCode, u)
+			return nil, pkg.NewError(pkg.ServerError, err.Error()).WithDetails(fmt.Sprintf("failed to fetch data, status code: %d \nrequest url is %s", resp.StatusCode, u))
 		}
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	return body, nil
 }
 
-func (f *ThirdPartyDataFetcher) PostData(params string, body []byte) ([]byte, error) {
+func (f *ThirdPartyDataFetcher) PostData(params string, body []byte) ([]byte, *pkg.Error) {
 	// 构造URL
 	u, err := url.Parse(f.Host + f.Path)
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	// 添加param
@@ -95,7 +96,7 @@ func (f *ThirdPartyDataFetcher) PostData(params string, body []byte) ([]byte, er
 
 	resp, err := http.Post(u.String(), "application/json", bytes.NewBuffer(body))
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -111,23 +112,23 @@ func (f *ThirdPartyDataFetcher) PostData(params string, body []byte) ([]byte, er
 			if r, err := f.OnError(); err == nil {
 				return r, nil
 			}
-			return nil, fmt.Errorf("failed to fetch data, status code: %d \nrequest url is %s", resp.StatusCode, u)
+			return nil, pkg.NewError(pkg.ServerError, err.Error()).WithDetails(fmt.Sprintf("failed to fetch data, status code: %d \nrequest url is %s", resp.StatusCode, u))
 		}
 	}
 
 	resBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	return resBody, nil
 }
 
-func (f *ThirdPartyDataFetcher) PatchData(method string, params string, body []byte) ([]byte, error) {
+func (f *ThirdPartyDataFetcher) PatchData(method string, params string, body []byte) ([]byte, *pkg.Error) {
 	// 构造URL
 	u, err := url.Parse(f.Host + f.Path)
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	// 添加param
@@ -164,13 +165,13 @@ func (f *ThirdPartyDataFetcher) PatchData(method string, params string, body []b
 			if r, err := f.OnError(); err == nil {
 				return r, nil
 			}
-			return nil, fmt.Errorf("failed to fetch data, status code: %d \nrequest url is %s", resp.StatusCode, u)
+			return nil, pkg.NewError(pkg.ServerError, err.Error()).WithDetails(fmt.Sprintf("failed to fetch data, status code: %d \nrequest url is %s", resp.StatusCode, u))
 		}
 	}
 
 	resBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	return resBody, nil

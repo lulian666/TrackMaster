@@ -1,6 +1,7 @@
 package model
 
 import (
+	"TrackMaster/pkg"
 	"gorm.io/gorm"
 	"time"
 )
@@ -21,12 +22,18 @@ type Type struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
 
-func (t *Type) Create(db *gorm.DB) error {
+func (t *Type) Create(db *gorm.DB) *pkg.Error {
 	result := db.Create(t)
-	return result.Error
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
 }
 
-func (e *EnumValue) Create(db *gorm.DB) error {
+func (e *EnumValue) Create(db *gorm.DB) *pkg.Error {
 	result := db.Create(e)
-	return result.Error
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
 }

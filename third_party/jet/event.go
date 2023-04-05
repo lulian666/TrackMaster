@@ -1,6 +1,7 @@
 package jet
 
 import (
+	"TrackMaster/pkg"
 	"TrackMaster/third_party"
 	"encoding/json"
 )
@@ -41,16 +42,16 @@ var eventFetcher = &third_party.ThirdPartyDataFetcher{
 
 //需要带上story id作为param
 
-func GetEvents(storyID string) ([]Event, error) {
+func GetEvents(storyID string) ([]Event, *pkg.Error) {
 	body, err := eventFetcher.FetchData(storyID)
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	response := eventResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return nil, err
+	err1 := json.Unmarshal(body, &response)
+	if err1 != nil {
+		return nil, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	return response.Events, nil

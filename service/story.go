@@ -8,9 +8,9 @@ import (
 )
 
 type StoryService interface {
-	SyncStory(p *model.Project) error
-	ListStory(story *model.Story, pager pkg.Pager) ([]model.Story, int64, error)
-	GetStory(story *model.Story) error
+	SyncStory(p *model.Project) *pkg.Error
+	ListStory(story *model.Story, pager pkg.Pager) ([]model.Story, int64, *pkg.Error)
+	GetStory(story *model.Story) *pkg.Error
 }
 
 type storyService struct {
@@ -23,7 +23,7 @@ func NewStoryService(db *gorm.DB) StoryService {
 	}
 }
 
-func (s storyService) SyncStory(p *model.Project) error {
+func (s storyService) SyncStory(p *model.Project) *pkg.Error {
 	// project 是否存在
 	err := p.Get(s.db)
 	if err != nil {
@@ -103,7 +103,7 @@ func (s storyService) SyncStory(p *model.Project) error {
 	return nil
 }
 
-func (s storyService) ListStory(story *model.Story, pager pkg.Pager) ([]model.Story, int64, error) {
+func (s storyService) ListStory(story *model.Story, pager pkg.Pager) ([]model.Story, int64, *pkg.Error) {
 	// 先判断project是否存在
 	project := model.Project{
 		ID: story.ProjectID,
@@ -117,6 +117,6 @@ func (s storyService) ListStory(story *model.Story, pager pkg.Pager) ([]model.St
 	return story.List(s.db, pageOffset, pager.PageSize)
 }
 
-func (s storyService) GetStory(story *model.Story) error {
+func (s storyService) GetStory(story *model.Story) *pkg.Error {
 	return story.Get(s.db)
 }

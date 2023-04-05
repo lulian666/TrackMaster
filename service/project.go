@@ -2,13 +2,14 @@ package service
 
 import (
 	"TrackMaster/model"
+	"TrackMaster/pkg"
 	"TrackMaster/third_party/jet"
 	"gorm.io/gorm"
 )
 
 type ProjectService interface {
-	SyncProject() error
-	ListProject() ([]model.Project, error)
+	SyncProject() *pkg.Error
+	ListProject() ([]model.Project, *pkg.Error)
 }
 
 type projectService struct {
@@ -25,7 +26,7 @@ func NewProjectService(db *gorm.DB) ProjectService {
 // 获取project list
 // 和本地本地的对比
 // 只新增不存在的id
-func (s projectService) SyncProject() error {
+func (s projectService) SyncProject() *pkg.Error {
 	projects, err := jet.GetProjects()
 	if err != nil {
 		return err
@@ -61,7 +62,7 @@ func (s projectService) SyncProject() error {
 	return nil
 }
 
-func (s projectService) ListProject() ([]model.Project, error) {
+func (s projectService) ListProject() ([]model.Project, *pkg.Error) {
 	p := &model.Project{}
 	return p.List(s.db)
 }

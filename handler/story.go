@@ -4,9 +4,9 @@ import (
 	"TrackMaster/model"
 	"TrackMaster/pkg"
 	"TrackMaster/service"
-	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"strings"
 )
 
 type StoryHandler struct {
@@ -27,7 +27,7 @@ func NewStoryHandler(s service.StoryService) StoryHandler {
 // @Success 200 {array} model.Story "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/stories/sync [post]
+// @Router /api/v2/stories/sync [post]
 func (h StoryHandler) Sync(c *gin.Context) {
 	res := pkg.NewResponse(c)
 
@@ -45,11 +45,11 @@ func (h StoryHandler) Sync(c *gin.Context) {
 	err := h.service.SyncStory(&p)
 	if err != nil {
 		// 有可能是没找到project的错误
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if strings.Contains(err.Msg, "record not found") {
 			res.ToErrorResponse(pkg.NewError(pkg.NotFound, "project does not exist"))
 			return
 		}
-		res.ToErrorResponse(pkg.NewError(pkg.ServerError, err.Error()))
+		res.ToErrorResponse(err)
 		return
 	}
 
@@ -60,12 +60,12 @@ func (h StoryHandler) Sync(c *gin.Context) {
 // @Tags story
 // @Summery list story
 // @Produce json
-// @Param page query string false "page"
-// @Param pageSize query string false "page size"
+// @Param page query string false "page, default 10"
+// @Param pageSize query string false "page size, default 10"
 // @Success 200 {object} model.Stories "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/stories [get]
+// @Router /api/v2/stories [get]
 func (h StoryHandler) List(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	pager := pkg.Pager{
@@ -85,11 +85,11 @@ func (h StoryHandler) List(c *gin.Context) {
 	}
 	stories, totalRow, err := h.service.ListStory(&s, pager)
 	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			res.ToErrorResponse(pkg.NewError(pkg.ServerError, err.Error()))
+		if !strings.Contains(err.Msg, "record not found") {
+			res.ToErrorResponse(err)
 			return
 		}
-		res.ToErrorResponse(pkg.NewError(pkg.NotFound, "project does not exist"))
+		res.ToErrorResponse(pkg.NewError(pkg.NotFound, fmt.Sprintf("project with id %s does not exist", projectID)))
 		return
 	}
 	res.ToResponseList(stories, totalRow)
@@ -103,7 +103,7 @@ func (h StoryHandler) List(c *gin.Context) {
 // @Success 200 {object} model.Story "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/stories/{id} [get]
+// @Router /api/v2/stories/{id} [get]
 func (h StoryHandler) Get(c *gin.Context) {
 	res := pkg.NewResponse(c)
 	id := c.Param("id")
@@ -113,8 +113,8 @@ func (h StoryHandler) Get(c *gin.Context) {
 
 	err := h.service.GetStory(&s)
 	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			res.ToErrorResponse(pkg.NewError(pkg.ServerError, err.Error()))
+		if !strings.Contains(err.Msg, "record not found") {
+			res.ToErrorResponse(err)
 			return
 		}
 		res.ToErrorResponse(pkg.NewError(pkg.NotFound, "story does not exist"))

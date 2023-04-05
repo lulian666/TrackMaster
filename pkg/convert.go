@@ -11,9 +11,12 @@ func (s StrTo) String() string {
 	return string(s)
 }
 
-func (s StrTo) Int() (int, error) {
+func (s StrTo) Int() (int, *Error) {
 	v, err := strconv.Atoi(s.String())
-	return v, err
+	if err != nil {
+		return 0, NewError(ServerError, err.Error())
+	}
+	return v, nil
 }
 
 func (s StrTo) MustInt() int {
@@ -21,9 +24,12 @@ func (s StrTo) MustInt() int {
 	return v
 }
 
-func (s StrTo) UInt32() (uint32, error) {
+func (s StrTo) UInt32() (uint32, *Error) {
 	v, err := strconv.Atoi(s.String())
-	return uint32(v), err
+	if err != nil {
+		return 0, NewError(ServerError, err.Error())
+	}
+	return uint32(v), nil
 }
 
 func (s StrTo) MustUInt32() uint32 {
@@ -33,13 +39,16 @@ func (s StrTo) MustUInt32() uint32 {
 
 type Strs []string
 
-func (m Strs) Scan(val interface{}) ([]string, error) {
-	s := val.(string)
+func (m Strs) Scan(val interface{}) ([]string, *Error) {
+	s, ok := val.(string)
+	if !ok {
+		return nil, NewError(ServerError, "fail to scan")
+	}
 	ss := strings.Split(string(s), "|")
 	return ss, nil
 }
 
-func (m Strs) Value() (string, error) {
+func (m Strs) Value() (string, *Error) {
 	str := strings.Join(m, "|")
 	return str, nil
 }

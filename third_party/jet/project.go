@@ -1,6 +1,7 @@
 package jet
 
 import (
+	"TrackMaster/pkg"
 	"TrackMaster/third_party"
 	"encoding/json"
 )
@@ -26,16 +27,16 @@ var projectFetcher = &third_party.ThirdPartyDataFetcher{
 	OnError: nil,
 }
 
-func GetProjects() ([]Project, error) {
+func GetProjects() ([]Project, *pkg.Error) {
 	body, err := projectFetcher.FetchData("")
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, "something went wrong with jet").WithDetails(err.Error())
 	}
 	response := projectResponse{}
 
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return nil, err
+	err1 := json.Unmarshal(body, &response)
+	if err1 != nil {
+		return nil, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	return response.Data, nil

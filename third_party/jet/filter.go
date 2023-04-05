@@ -1,6 +1,7 @@
 package jet
 
 import (
+	"TrackMaster/pkg"
 	"TrackMaster/third_party"
 	"encoding/json"
 )
@@ -40,13 +41,13 @@ var filterFetcher = &third_party.ThirdPartyDataFetcher{
 
 // Update
 // filter的patch方法不返回任何数据
-func (f Filter) Update() error {
-	reqBody, err := json.Marshal(f)
-	if err != nil {
-		return err
+func (f Filter) Update() *pkg.Error {
+	reqBody, err1 := json.Marshal(f)
+	if err1 != nil {
+		return pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
-	_, err = filterFetcher.PatchData("PATCH", f.ID, reqBody)
+	_, err := filterFetcher.PatchData("PATCH", f.ID, reqBody)
 	if err != nil {
 		return err
 	}
@@ -54,10 +55,10 @@ func (f Filter) Update() error {
 	return nil
 }
 
-func (f Filter) Create() (FilterRes, error) {
-	body, err := json.Marshal(f)
-	if err != nil {
-		return FilterRes{}, err
+func (f Filter) Create() (FilterRes, *pkg.Error) {
+	body, err1 := json.Marshal(f)
+	if err1 != nil {
+		return FilterRes{}, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	resBody, err := filterFetcher.PostData("", body)
@@ -66,7 +67,11 @@ func (f Filter) Create() (FilterRes, error) {
 	}
 
 	filter := FilterRes{}
-	err = json.Unmarshal(resBody, &filter)
+	err1 = json.Unmarshal(resBody, &filter)
 
-	return filter, err
+	if err1 != nil {
+		return FilterRes{}, pkg.NewError(pkg.ServerError, err1.Error())
+	}
+
+	return filter, nil
 }

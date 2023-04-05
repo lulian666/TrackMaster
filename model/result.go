@@ -1,7 +1,11 @@
 package model
 
 import (
+	"TrackMaster/pkg"
 	"database/sql/driver"
+	"errors"
+	"fmt"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -14,12 +18,12 @@ const (
 	UNTESTED  TestResult = "UNTESTED"
 )
 
-func (r *TestResult) Scan(value interface{}) error {
+func (r *TestResult) Scan(value interface{}) *pkg.Error {
 	*r = TestResult(value.([]byte))
 	return nil
 }
 
-func (r *TestResult) Value() (driver.Value, error) {
+func (r *TestResult) Value() (driver.Value, *pkg.Error) {
 	return string(*r), nil
 }
 
@@ -44,4 +48,25 @@ type FieldResult struct {
 	RecordID string `gorm:"index;not null" json:"recordID"`
 	FieldID  string `gorm:"index;not null" json:"fieldID"`
 	ID       string `gorm:"type:varchar(191);primaryKey" json:"id" binding:"required,max=32"`
+}
+
+func (fr *FieldResult) BeforeSave(db *gorm.DB) (err error) {
+	value, _ := fr.Android.Value()
+	v := value.(string)
+	if v != "SUCCESS" && v != "FAIL" && v != "UNCERTAIN" && v != "UNTESTED" {
+		return errors.New(fmt.Sprintf("field {%s} has invalid result value with Android", fr.FieldID))
+	}
+
+	value1, _ := fr.IOS.Value()
+	v1 := value1.(string)
+	if v1 != "SUCCESS" && v1 != "FAIL" && v1 != "UNCERTAIN" && v1 != "UNTESTED" {
+		return errors.New(fmt.Sprintf("field {%s} has invalid result value with IOS", fr.FieldID))
+	}
+
+	value2, _ := fr.Other.Value()
+	v2 := value2.(string)
+	if v2 != "SUCCESS" && v2 != "FAIL" && v2 != "UNCERTAIN" && v2 != "UNTESTED" {
+		return errors.New(fmt.Sprintf("field {%s} has invalid result value with Other", fr.FieldID))
+	}
+	return
 }

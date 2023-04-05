@@ -1,6 +1,7 @@
 package jet
 
 import (
+	"TrackMaster/pkg"
 	"TrackMaster/third_party"
 	"encoding/json"
 )
@@ -24,7 +25,7 @@ var storyFetcher = &third_party.ThirdPartyDataFetcher{
 
 // GetStories
 // 只取最新修改过的15条需求
-func GetStories(projectID string) ([]Story, error) {
+func GetStories(projectID string) ([]Story, *pkg.Error) {
 	query := make(map[string][]string)
 	query["project"] = []string{projectID}
 	//{"sortKey": "updatedAt", "sortDirection": "DESC", "pageSize": 15, "page": 1}
@@ -36,12 +37,12 @@ func GetStories(projectID string) ([]Story, error) {
 	storyFetcher.Query = query
 	body, err := storyFetcher.FetchData("")
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 	response := storyResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return nil, err
+	err1 := json.Unmarshal(body, &response)
+	if err1 != nil {
+		return nil, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	return response.Data, nil

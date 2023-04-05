@@ -1,6 +1,7 @@
 package jet
 
 import (
+	"TrackMaster/pkg"
 	"TrackMaster/third_party"
 	"encoding/json"
 )
@@ -31,20 +32,20 @@ var enumTypeFetcher = &third_party.ThirdPartyDataFetcher{
 	OnError: nil,
 }
 
-func GetEnumTypes(projectID string) ([]Type, error) {
+func GetEnumTypes(projectID string) ([]Type, *pkg.Error) {
 	query := make(map[string][]string)
 	query["project"] = []string{projectID}
 	enumTypeFetcher.Query = query
 
 	body, err := enumTypeFetcher.FetchData("")
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	response := enumResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return nil, err
+	err1 := json.Unmarshal(body, &response)
+	if err1 != nil {
+		return nil, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	return response.Data, nil

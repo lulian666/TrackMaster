@@ -1,6 +1,7 @@
 package jet
 
 import (
+	"TrackMaster/pkg"
 	"TrackMaster/third_party"
 	"encoding/json"
 	"strconv"
@@ -161,28 +162,28 @@ var logFetcher = &third_party.ThirdPartyDataFetcher{
 	OnError: nil,
 }
 
-func GetLogs(filterID string) ([]Log, error) {
+func GetLogs(filterID string) ([]Log, *pkg.Error) {
 	query := make(map[string][]string)
 	query["filter"] = []string{filterID}
 	logFetcher.Query = query
 
 	body, err := logFetcher.FetchData("")
 	if err != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	response := logResponse{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return nil, err
+	err1 := json.Unmarshal(body, &response)
+	if err1 != nil {
+		return nil, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
 	// 因为body里给的log是字符串类型，所以要多这一步转化
 	for i := range response.Data {
 		logDetail := LogDetail{}
-		err = json.Unmarshal([]byte(response.Data[i].LogStr), &logDetail)
-		if err != nil {
-			return nil, err
+		err1 = json.Unmarshal([]byte(response.Data[i].LogStr), &logDetail)
+		if err1 != nil {
+			return nil, pkg.NewError(pkg.ServerError, err1.Error())
 		}
 		response.Data[i].Log = logDetail
 	}
@@ -192,14 +193,14 @@ func GetLogs(filterID string) ([]Log, error) {
 
 // ClearLogs
 // 读取过log以后即刻清除，保证下次读取时全是未读的log
-func ClearLogs(filterID string) error {
+func ClearLogs(filterID string) *pkg.Error {
 	query := make(map[string][]string)
 	query["filter"] = []string{filterID}
 	logFetcher.Query = query
 
 	_, err := logFetcher.PatchData("DELETE", "", nil)
 	if err != nil {
-		return err
+		return pkg.NewError(pkg.ServerError, err.Error())
 	}
 
 	return nil

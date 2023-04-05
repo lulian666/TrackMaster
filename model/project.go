@@ -13,25 +13,27 @@ type Project struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
 
-func (p *Project) Create(db *gorm.DB) error {
+func (p *Project) Create(db *gorm.DB) *pkg.Error {
 	result := db.Create(p)
-	return result.Error
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
 }
 
-func (p *Project) List(db *gorm.DB) ([]Project, error) {
+func (p *Project) List(db *gorm.DB) ([]Project, *pkg.Error) {
 	var projects []Project
-	var err error
 	result := db.Find(&projects)
 	if result.Error != nil {
-		return nil, err
+		return nil, pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 	return projects, nil
 }
 
-func (p *Project) Get(db *gorm.DB) error {
+func (p *Project) Get(db *gorm.DB) *pkg.Error {
 	result := db.First(&p)
 	if result.Error != nil {
-		return result.Error
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
 	}
 	return nil
 }

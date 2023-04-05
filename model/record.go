@@ -1,6 +1,7 @@
 package model
 
 import (
+	"TrackMaster/pkg"
 	"database/sql/driver"
 	"gorm.io/gorm"
 	"time"
@@ -38,22 +39,31 @@ type Record struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
 
-func (r *Record) Create(db *gorm.DB) error {
+func (r *Record) Create(db *gorm.DB) *pkg.Error {
 	result := db.Create(r)
-	return result.Error
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
 }
 
-func (r *Record) Get(db *gorm.DB) error {
+func (r *Record) Get(db *gorm.DB) *pkg.Error {
 	result := db.Preload("EventLogs.FieldLogs").Preload("Events").First(&r)
-	return result.Error
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
 }
 
-func (r *Record) Update(db *gorm.DB) error {
+func (r *Record) Update(db *gorm.DB) *pkg.Error {
 	err := r.Get(db)
 	if err != nil {
 		return err
 	}
 
 	result := db.Model(&r).Update("status", OFF)
-	return result.Error
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+	return nil
 }
