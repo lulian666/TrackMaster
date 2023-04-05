@@ -22,7 +22,7 @@ type RealTimeService interface {
 	Update(r *model.Record, req request.Update) *pkg.Error
 	GetLog(r *model.Record) ([]model.EventLog, int64, *pkg.Error)
 	ClearLog(r *model.Record) *pkg.Error
-	ResetResult()
+	UpdateResult(req request.UpdateResult) *pkg.Error
 	GetResult(r *model.Record) ([]model.Event, int64, *pkg.Error)
 	Test(r model.Record)
 	//recordExist(r *model.Record) *pkg.Error
@@ -206,8 +206,24 @@ func (s realTimeService) ClearLog(r *model.Record) *pkg.Error {
 	return nil
 }
 
-func (s realTimeService) ResetResult() {
+func (s realTimeService) UpdateResult(req request.UpdateResult) *pkg.Error {
+	r := model.Record{ID: req.RecordID}
+	err := s.recordExist(&r)
+	if err != nil {
+		return err
+	}
 
+	fieldResultUpdateList := make([]model.FieldResult, 0, len(req.Fields))
+	for i := range req.Fields {
+		fieldResultUpdateList = append(fieldResultUpdateList, req.Fields[i].Results...)
+	}
+
+	result := s.db.Save(&fieldResultUpdateList)
+	if result.Error != nil {
+		return pkg.NewError(pkg.ServerError, result.Error.Error())
+	}
+
+	return nil
 }
 
 func (s realTimeService) GetResult(r *model.Record) ([]model.Event, int64, *pkg.Error) {
@@ -227,15 +243,6 @@ func (s realTimeService) GetResult(r *model.Record) ([]model.Event, int64, *pkg.
 	if err1 != nil {
 		return nil, 0, pkg.NewError(pkg.ServerError, err.Error())
 	}
-
-	// 批量查询
-	//eventResults := model.EventResults(make([]model.EventResult, 0, totalRow))
-	//err = eventResults.Get(s.db, *r, events)
-	//if err != nil {
-	//	return nil, 0, err
-	//}
-
-	// 一一对应
 
 	return events, totalRow, nil
 }

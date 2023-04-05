@@ -205,19 +205,31 @@ func (h RealTimeHandler) ClearLog(c *gin.Context) {
 	res.ToResponse(nil)
 }
 
-// ResetResult
-// todo 或许这能改成update
+// UpdateResult
 // @Tags realTime
 // @Summery reset test result in record
 // @Produce json
-// @Param record query string true "record ID"
-// @Param event query string true "event ID"
+// @Param record body string true "record ID"
+// @Param fields body model.Fields true "field IDs"
 // @Success 200 {object} object "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
-// @Router /api/v1/realTime/resetResult [post]
-func (h RealTimeHandler) ResetResult(c *gin.Context) {
+// @Router /api/v1/realTime/updateResult [post]
+func (h RealTimeHandler) UpdateResult(c *gin.Context) {
+	res := pkg.NewResponse(c)
+	req := request.UpdateResult{}
+	err := c.ShouldBind(&req)
+	if err != nil {
+		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, err.Error()))
+		return
+	}
 
+	err = h.service.UpdateResult(req)
+	if err != nil {
+		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, err.Error()))
+		return
+	}
+	res.ToResponse(nil)
 }
 
 // GetResult
@@ -245,17 +257,7 @@ func (h RealTimeHandler) GetResult(c *gin.Context) {
 		res.ToErrorResponse(err)
 	}
 
-	//var record model.Record
-	//
-	//initializer.DB.Preload("Events").
-	//	Joins("JOIN (SELECT MAX(id) as id, event_id FROM event_results GROUP BY event_id) er ON er.event_id = events.id").
-	//	Joins("LEFT JOIN field_results fr ON fr.result_id = er.id").
-	//	Joins("JOIN (SELECT MAX(id) as id, field_id FROM field_results GROUP BY field_id) fr2 ON fr2.field_id = fr.field_id AND fr2.id = fr.id").
-	//	Where("records.id = ?", recordID).
-	//	First(&record)
-
 	res.ToResponseList(events, totalRow)
-	//res.ToResponse(record)
 }
 
 func (h RealTimeHandler) Test(c *gin.Context) {

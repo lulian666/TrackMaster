@@ -592,36 +592,6 @@ paths:
             $ref: '#/definitions/pkg.Error'
       tags:
       - realTime
-  /api/v1/realTime/resetResult:
-    post:
-      parameters:
-      - description: record ID
-        in: query
-        name: record
-        required: true
-        type: string
-      - description: event ID
-        in: query
-        name: event
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 成功
-          schema:
-            type: object
-        "400":
-          description: 请求错误
-          schema:
-            $ref: '#/definitions/pkg.Error'
-        "500":
-          description: 内部错误
-          schema:
-            $ref: '#/definitions/pkg.Error'
-      tags:
-      - realTime
   /api/v1/realTime/start:
     post:
       parameters:
@@ -718,6 +688,40 @@ paths:
           description: 成功
           schema:
             $ref: '#/definitions/model.Record'
+        "400":
+          description: 请求错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+        "500":
+          description: 内部错误
+          schema:
+            $ref: '#/definitions/pkg.Error'
+      tags:
+      - realTime
+  /api/v1/realTime/updateResult:
+    post:
+      parameters:
+      - description: record ID
+        in: body
+        name: record
+        required: true
+        schema:
+          type: string
+      - description: field IDs
+        in: body
+        name: fields
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/model.Field'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            type: object
         "400":
           description: 请求错误
           schema:

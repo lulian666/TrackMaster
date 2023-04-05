@@ -7,7 +7,8 @@ func NewRouter() *gin.Engine {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	apiV1 := r.Group("api/v1")
+	//apiV1 := r.Group("api/v1")
+	apiV1 := r.Group("/")
 
 	AddProjectRoutes(apiV1)
 	AddAccountRoutes(apiV1)

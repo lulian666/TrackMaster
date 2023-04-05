@@ -1,9 +1,7 @@
 package model
 
 import (
-	"TrackMaster/pkg"
 	"database/sql/driver"
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -46,10 +44,4 @@ type FieldResult struct {
 	RecordID string `gorm:"index;not null" json:"recordID"`
 	FieldID  string `gorm:"index;not null" json:"fieldID"`
 	ID       string `gorm:"type:varchar(191);primaryKey" json:"id" binding:"required,max=32"`
-}
-
-type EventResults []EventResult
-
-func (ers *EventResults) Get(db *gorm.DB, r Record, events []Event) *pkg.Error {
-	return nil
 }
