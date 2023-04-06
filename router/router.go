@@ -1,8 +1,11 @@
 package router
 
-import "github.com/gin-gonic/gin"
+import (
+	"TrackMaster/pkg/worker"
+	"github.com/gin-gonic/gin"
+)
 
-func NewRouter() *gin.Engine {
+func NewRouter(wp *worker.Pool) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
@@ -12,7 +15,7 @@ func NewRouter() *gin.Engine {
 	AddProjectRoutes(apiV1)
 	AddAccountRoutes(apiV1)
 	AddStoryRoutes(apiV1)
-	AddRealTimeRoutes(apiV1)
+	AddRealTimeRoutes(apiV1, wp)
 
 	return r
 }

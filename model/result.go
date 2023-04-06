@@ -51,21 +51,15 @@ type FieldResult struct {
 }
 
 func (fr *FieldResult) BeforeSave(db *gorm.DB) (err error) {
-	value, _ := fr.Android.Value()
-	v := value.(string)
-	if v != "SUCCESS" && v != "FAIL" && v != "UNCERTAIN" && v != "UNTESTED" {
+	if fr.Android != SUCCESS && fr.Android != FAIL && fr.Android != UNCERTAIN && fr.Android != UNTESTED {
 		return errors.New(fmt.Sprintf("field {%s} has invalid result value with Android", fr.FieldID))
 	}
 
-	value1, _ := fr.IOS.Value()
-	v1 := value1.(string)
-	if v1 != "SUCCESS" && v1 != "FAIL" && v1 != "UNCERTAIN" && v1 != "UNTESTED" {
+	if fr.IOS != SUCCESS && fr.IOS != FAIL && fr.IOS != UNCERTAIN && fr.IOS != UNTESTED {
 		return errors.New(fmt.Sprintf("field {%s} has invalid result value with IOS", fr.FieldID))
 	}
 
-	value2, _ := fr.Other.Value()
-	v2 := value2.(string)
-	if v2 != "SUCCESS" && v2 != "FAIL" && v2 != "UNCERTAIN" && v2 != "UNTESTED" {
+	if fr.Other != SUCCESS && fr.Other != FAIL && fr.Other != UNCERTAIN && fr.Other != UNTESTED {
 		return errors.New(fmt.Sprintf("field {%s} has invalid result value with Other", fr.FieldID))
 	}
 	return

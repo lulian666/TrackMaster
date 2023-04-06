@@ -4,7 +4,9 @@ import (
 	"TrackMaster/model"
 	"TrackMaster/model/request"
 	"TrackMaster/pkg"
+	"TrackMaster/pkg/worker"
 	"TrackMaster/service"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
@@ -31,37 +33,40 @@ func NewRealTimeHandler(s service.RealTimeService) RealTimeHandler {
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
 // @Router /api/v2/realTime/start [post]
-func (h RealTimeHandler) Start(c *gin.Context) {
-	res := pkg.NewResponse(c)
+func (h RealTimeHandler) Start(wp *worker.Pool) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		res := pkg.NewResponse(c)
 
-	req := request.Start{}
-	err := c.ShouldBind(&req)
-	if err != nil {
-		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, err.Error()))
-		return
-	}
-
-	if len(req.EventIDs) == 0 {
-		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个event"))
-		return
-	}
-
-	if len(req.AccountIDs) == 0 {
-		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个account"))
-		return
-	}
-
-	record, err1 := h.service.Start(req)
-	if err1 != nil {
-		if strings.Contains(err1.Msg, "record not found") {
-			res.ToErrorResponse(pkg.NewError(pkg.NotFound, err.Error()))
+		req := request.Start{}
+		err := c.ShouldBind(&req)
+		if err != nil {
+			res.ToErrorResponse(pkg.NewError(pkg.BadRequest, err.Error()))
 			return
 		}
-		res.ToErrorResponse(err1)
-		return
+
+		if len(req.EventIDs) == 0 {
+			res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个event"))
+			return
+		}
+
+		if len(req.AccountIDs) == 0 {
+			res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个account"))
+			return
+		}
+
+		record, err1 := h.service.Start(wp, req)
+		if err1 != nil {
+			if strings.Contains(err1.Msg, "record not found") {
+				res.ToErrorResponse(pkg.NewError(pkg.NotFound, err.Error()))
+				return
+			}
+			res.ToErrorResponse(err1)
+			return
+		}
+
+		res.ToResponse(record)
 	}
 
-	res.ToResponse(record)
 }
 
 // Stop
@@ -250,13 +255,31 @@ func (h RealTimeHandler) GetResult(c *gin.Context) {
 	res.ToResponseList(events, totalRow)
 }
 
-func (h RealTimeHandler) Test(c *gin.Context) {
-	res := pkg.NewResponse(c)
+func (h RealTimeHandler) Test(wp *worker.Pool) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		res := pkg.NewResponse(c)
+		req := request.Start{}
+		err := c.ShouldBind(&req)
+		if err != nil {
+			res.ToErrorResponse(pkg.NewError(pkg.BadRequest, err.Error()))
+			return
+		}
 
-	r := model.Record{
-		ID: "dd6fd66c457e435894322b1fc7ca3496",
+		if len(req.EventIDs) == 0 {
+			res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个event"))
+			return
+		}
+
+		if len(req.AccountIDs) == 0 {
+			res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个account"))
+			return
+		}
+
+		record, err := h.service.Start(wp, req)
+		if err != nil {
+			fmt.Println("error")
+		}
+
+		res.ToResponse(record)
 	}
-
-	h.service.Test(r)
-	res.ToResponse(nil)
 }
