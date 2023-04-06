@@ -61,7 +61,7 @@ func (f Filter) Create() (FilterRes, *pkg.Error) {
 		return FilterRes{}, pkg.NewError(pkg.ServerError, err1.Error())
 	}
 
-	resBody, err := filterFetcher.PostData("", body)
+	resBody, err := filterFetcher.PatchData("POST", "", body)
 	if err != nil {
 		return FilterRes{}, err
 	}

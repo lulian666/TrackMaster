@@ -125,7 +125,10 @@ func (s realTimeService) Stop(r *model.Record) *pkg.Error {
 		ID:     r.Filter,
 		Status: jet.STOPPED,
 	}
-	_ = filter.Update()
+	err = filter.Update()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -433,7 +436,7 @@ func testLog(logCh <-chan int, r model.Record) {
 	for count := range logCh {
 		// this loop closes when channel is closed
 		fmt.Printf("reading %d 条新log...\n", count)
-		testNewLog(count, r)
+		testNewLog(count, r) // todo 如果测试过程出错，需要重测吗？
 	}
 	fmt.Println("channel closed")
 }
@@ -581,9 +584,7 @@ func enumFieldCheck(field model.Field, sep string, fieldLog model.FieldLog) bool
 	}
 	var allFieldLogs []string
 	initializer.DB.Model(model.FieldLog{}).
-		Where("platform = ?", fieldLog.Platform).
-		Where("field_id = ?", fieldLog.FieldID).
-		Where("key = ?", fieldLog.Key).
+		Where("platform = ? AND field_id = ? AND `key` = ?", fieldLog.Platform, fieldLog.FieldID, fieldLog.Key).
 		Pluck("value", &allFieldLogs)
 	return stringArrayEqual(values, allFieldLogs)
 }
