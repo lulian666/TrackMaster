@@ -2,6 +2,7 @@ package worker
 
 import (
 	"TrackMaster/model"
+	"TrackMaster/pkg"
 	"TrackMaster/pkg/track"
 	"fmt"
 )
@@ -29,13 +30,13 @@ type Task struct {
 
 // Pool 定义用于执行任务的goroutine池
 type Pool struct {
-	MaxWorkers int          // 最大goroutine数
-	MaxQueue   int          // 最大队列长度
-	Tasks      chan *Task   // 任务通道
-	Errors     chan<- error // 错误通道
+	MaxWorkers int               // 最大goroutine数
+	MaxQueue   int               // 最大队列长度
+	Tasks      chan *Task        // 任务通道
+	Errors     chan<- *pkg.Error // 错误通道
 }
 
-func NewWorkerPool(errCh chan<- error) *Pool {
+func NewWorkerPool(errCh chan<- *pkg.Error) *Pool {
 	return &Pool{
 		MaxWorkers: MaxWorkers,
 		MaxQueue:   MaxQueue,
@@ -56,11 +57,10 @@ func (wp *Pool) Start() {
 	}
 }
 
-func (wp *Pool) DoTask(task *Task) error {
+func (wp *Pool) DoTask(task *Task) *pkg.Error {
 	if task.Type == Fetch {
 		count, err := track.FetchNewLog(task.Record)
 		if err != nil {
-			task.Cancel <- struct{}{} // 如果读log出错，这个task就取消 todo 在哪里取消
 			return err
 		}
 
@@ -83,7 +83,6 @@ func (wp *Pool) DoTask(task *Task) error {
 	if task.Type == Test {
 		err := track.TestNewLog(task.Record)
 		if err != nil {
-			task.Cancel <- struct{}{} // 如果读log出错，这个task就取消
 			return err
 		}
 	}

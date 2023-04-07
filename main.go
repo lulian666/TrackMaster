@@ -3,14 +3,17 @@ package main
 import (
 	_ "TrackMaster/docs"
 	"TrackMaster/initializer"
+	"TrackMaster/pkg"
 	"TrackMaster/pkg/worker"
 	"TrackMaster/router"
+	"TrackMaster/third_party/slack"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func init() {
@@ -22,7 +25,7 @@ func init() {
 // @title TrackMaster
 // @version 2.0
 func main() {
-	errorCh := make(chan error, worker.MaxQueue)
+	errorCh := make(chan *pkg.Error, worker.MaxQueue)
 	wp := worker.NewWorkerPool(errorCh)
 	wp.Start()
 
@@ -45,7 +48,10 @@ func main() {
 
 	// 监测错误
 	for err := range errorCh {
-		fmt.Printf("Error occurred: %v\n", err)
+		fmt.Printf("Error occurred: %v\n", err.Error())
+		fmt.Printf("Error details: %v\n", err.Details)
+		details := strings.Join(err.Details, ";")
+		_ = slack.SendMessage(err.Error() + "\n" + details)
 	}
 
 }
