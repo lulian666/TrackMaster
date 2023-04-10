@@ -101,7 +101,7 @@ func FetchNewLog(r model.Record) (int, *pkg.Error) {
 		if len(logCreateList) > 0 {
 			result := initializer.DB.Create(logCreateList)
 			if result.Error != nil {
-				fmt.Println(result.Error.Error())
+				return 0, pkg.NewError(pkg.ServerError, result.Error.Error())
 			}
 		}
 
@@ -109,7 +109,7 @@ func FetchNewLog(r model.Record) (int, *pkg.Error) {
 		if len(fieldLogCreateList) > 0 {
 			result := initializer.DB.Create(fieldLogCreateList)
 			if result.Error != nil {
-				fmt.Println(result.Error.Error())
+				return 0, pkg.NewError(pkg.ServerError, result.Error.Error())
 			}
 		}
 	}

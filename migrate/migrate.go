@@ -32,10 +32,10 @@ func main() {
 	//	log.Fatal("Error migrating database")
 	//}
 	//
-	err := initializer.DB.AutoMigrate(&model.Event{})
-	if err != nil {
-		log.Fatal("Error migrating database")
-	}
+	//err := initializer.DB.AutoMigrate(&model.Event{})
+	//if err != nil {
+	//	log.Fatal("Error migrating database")
+	//}
 
 	//err = initializer.DB.AutoMigrate(&model.Type{})
 	//if err != nil {
@@ -76,20 +76,25 @@ func main() {
 	//	log.Fatal("Error migrating database")
 	//}
 
-	err = initializer.DB.AutoMigrate(&model.Record{})
-	if err != nil {
-		log.Fatal("Error migrating database")
-	}
+	//err = initializer.DB.AutoMigrate(&model.Record{})
+	//if err != nil {
+	//	log.Fatal("Error migrating database")
+	//}
 
 	//err := initializer.DB.AutoMigrate(&model.EventResult{})
 	//if err != nil {
 	//	log.Fatal("Error migrating database")
 	//}
 
-	//err = initializer.DB.AutoMigrate(&model.FieldResult{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
+	err := initializer.DB.AutoMigrate(&model.FieldResult{})
+	if err != nil {
+		log.Fatal("Error migrating database")
+	}
+
+	err = initializer.DB.AutoMigrate(&model.Schedule{})
+	if err != nil {
+		log.Fatal("Error migrating database")
+	}
 
 	log.Println("Migration successful")
 }

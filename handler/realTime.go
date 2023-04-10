@@ -6,7 +6,6 @@ import (
 	"TrackMaster/pkg"
 	"TrackMaster/pkg/worker"
 	"TrackMaster/service"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
@@ -275,9 +274,9 @@ func (h RealTimeHandler) Test(wp *worker.Pool) func(c *gin.Context) {
 			return
 		}
 
-		record, err := h.service.Start(wp, req)
-		if err != nil {
-			fmt.Println("error")
+		record, err1 := h.service.Start(wp, req)
+		if err1 != nil {
+			res.ToErrorResponse(err1)
 		}
 
 		res.ToResponse(record)

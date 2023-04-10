@@ -3,13 +3,14 @@ package service
 import (
 	"TrackMaster/model"
 	"TrackMaster/pkg"
+	"TrackMaster/pkg/track"
 	"TrackMaster/third_party/jet"
 	"gorm.io/gorm"
 	"reflect"
 )
 
 type EventService interface {
-	SyncEvent(story model.Story) *pkg.Error
+	SyncEvent(storyID string) *pkg.Error
 }
 
 type eventService struct {
@@ -20,8 +21,8 @@ func NewEventService(db *gorm.DB) EventService {
 	return &eventService{db: db}
 }
 
-func (s eventService) SyncEvent(story model.Story) *pkg.Error {
-	events, err := jet.GetEvents(story.ID)
+func (s eventService) SyncEvent(storyID string) *pkg.Error {
+	events, err := jet.GetEvents(storyID)
 	if err != nil {
 		return err
 	}
@@ -43,8 +44,8 @@ func (s eventService) SyncEvent(story model.Story) *pkg.Error {
 	for i := range events {
 		e := model.Event{}
 		for j := range existingEvents {
-			if events[i].ID == existingEvents[j].ID && existingEvents[j].StoryID == story.ID {
-				e.StoryID = story.ID
+			if events[i].ID == existingEvents[j].ID && existingEvents[j].StoryID == storyID {
+				e.StoryID = storyID
 				e.ID = events[i].ID
 				if events[i].Name != existingEvents[j].Name || events[i].Desc != existingEvents[j].Description {
 					e.Name = events[i].Name
@@ -55,7 +56,7 @@ func (s eventService) SyncEvent(story model.Story) *pkg.Error {
 		}
 
 		if e.ID == "" {
-			e.StoryID = story.ID
+			e.StoryID = storyID
 			e.ID = events[i].ID
 			e.Name = events[i].Name
 			e.Description = events[i].Desc
@@ -76,7 +77,7 @@ func (s eventService) SyncEvent(story model.Story) *pkg.Error {
 					f.EventID = e.ID
 					f.ID = fields[m].ID
 					if anyDifference(existingFields[n], fields[m]) {
-						value, err := locateValue(fields[m], s.db)
+						value, err := track.LocateValue(fields[m], s.db)
 						if err != nil {
 							return err
 						}
@@ -99,7 +100,7 @@ func (s eventService) SyncEvent(story model.Story) *pkg.Error {
 				f.Type = fields[m].Type.Name
 				f.TypeID = fields[m].Type.ID
 				f.Key = fields[m].Name
-				value, err := locateValue(fields[m], s.db)
+				value, err := track.LocateValue(fields[m], s.db)
 				if err != nil {
 					return err
 				}
@@ -153,30 +154,4 @@ func anyDifference(existingF model.Field, f jet.Field) bool {
 		return true
 	}
 	return false
-}
-
-func locateValue(field jet.Field, db *gorm.DB) ([]string, *pkg.Error) {
-	if len(field.Values) > 0 {
-		// 根据type id和id去拿值
-		values := make([]string, 0, len(field.Values))
-		for _, v := range field.Values {
-			value := model.EnumValue{}
-			result := db.Where("type_id = ?", field.Type.ID).Where("id = ?", v).Find(&value)
-			if result.Error != nil {
-				return nil, pkg.NewError(pkg.ServerError, result.Error.Error())
-			}
-			if value.ID != "" {
-				values = append(values, value.Name)
-			}
-		}
-		// 如果遍历完数组里的值后，一个value都没有找到，就说明里面的值并非id
-		// 那里面的值就是我们要取的值本身，直接赋值就好了
-		if len(values) == 0 {
-			values = append(values, field.Values...)
-		}
-		return values, nil
-	} else {
-		// 没有值
-		return []string{""}, nil
-	}
 }

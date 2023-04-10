@@ -3,6 +3,7 @@ package service
 import (
 	"TrackMaster/model"
 	"TrackMaster/pkg"
+	"TrackMaster/pkg/track"
 	"TrackMaster/third_party/jet"
 	"gorm.io/gorm"
 )
@@ -30,8 +31,7 @@ func (s storyService) SyncStory(p *model.Project) *pkg.Error {
 		return err
 	}
 	// 先同步enum type，再同步story
-	enumTypeS := NewEnumTypeService(s.db)
-	err = enumTypeS.SyncEnumType(p)
+	err = track.SyncEnumType(p)
 	if err != nil {
 		return err
 	}
@@ -92,12 +92,21 @@ func (s storyService) SyncStory(p *model.Project) *pkg.Error {
 	// fix: story需要先保存
 	// 更新events
 	eventS := NewEventService(s.db)
-	storyList := append(storyCreateList, storyUpdateList...)
-	for i := range storyList {
-		err = eventS.SyncEvent(storyList[i])
-		if err != nil {
-			return err
-		}
+	errCh := make(chan *pkg.Error, 1)
+	for i := range stories {
+		go func(i int) {
+			err := eventS.SyncEvent(stories[i].ID)
+			if err != nil {
+				errCh <- err
+			}
+		}(i)
+	}
+
+	select {
+	case err := <-errCh:
+		return err
+	default:
+		// do nothing
 	}
 
 	return nil

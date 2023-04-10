@@ -27,7 +27,7 @@ func init() {
 func main() {
 	errorCh := make(chan *pkg.Error, worker.MaxQueue)
 	wp := worker.NewWorkerPool(errorCh)
-	wp.Start()
+	wp.Begin()
 
 	r := router.NewRouter(wp)
 

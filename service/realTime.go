@@ -4,6 +4,7 @@ import (
 	"TrackMaster/initializer"
 	"TrackMaster/model"
 	"TrackMaster/model/request"
+	"TrackMaster/model/task"
 	"TrackMaster/pkg"
 	"TrackMaster/pkg/worker"
 	"TrackMaster/third_party/jet"
@@ -383,7 +384,6 @@ func checkLog(limit int, r model.Record, wp *worker.Pool) {
 	for range ticker.C {
 		initializer.DB.First(&r)
 		if i > limit || r.Status == model.OFF {
-			ticker.Stop()
 			r.Status = model.OFF
 			initializer.DB.Save(r)
 
@@ -392,21 +392,21 @@ func checkLog(limit int, r model.Record, wp *worker.Pool) {
 				Status: jet.STOPPED,
 			}
 			_ = filter.Update()
+			ticker.Stop()
 			break
 		}
 
-		task := &worker.Task{
-			ID:     r.ID,
-			Cancel: make(chan struct{}),
-			Type:   worker.Fetch,
+		job := task.RealTimeTrackTask{
+			Type:   task.Fetch,
 			Record: r,
+			WP:     wp,
 		}
 
 		select {
-		case wp.Tasks <- task:
-			fmt.Println("Fetch Task has been added to the queue")
+		case wp.Jobs <- &job:
+			fmt.Println("Fetch job has been added to the queue")
 		default:
-			fmt.Println("Too many Tasks")
+			fmt.Println("Too many jobs")
 		}
 		i += 1
 	}

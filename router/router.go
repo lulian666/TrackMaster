@@ -10,12 +10,13 @@ func NewRouter(wp *worker.Pool) *gin.Engine {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	apiV1 := r.Group("api/v2")
+	apiV2 := r.Group("api/v2")
 
-	AddProjectRoutes(apiV1)
-	AddAccountRoutes(apiV1)
-	AddStoryRoutes(apiV1)
-	AddRealTimeRoutes(apiV1, wp)
+	AddProjectRoutes(apiV2)
+	AddAccountRoutes(apiV2)
+	AddStoryRoutes(apiV2)
+	AddRealTimeRoutes(apiV2, wp)
+	AddScheduleRouter(apiV2, wp)
 
 	return r
 }
