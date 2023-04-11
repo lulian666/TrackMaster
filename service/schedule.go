@@ -90,16 +90,19 @@ func (s scheduleService) Off(p *model.Project) (model.Schedule, *pkg.Error) {
 		return model.Schedule{}, err
 	}
 
-	schedule.Status = false
-	s.db.Save(schedule)
+	// 如果本身已经关闭，则不进行修改
+	if schedule.Status {
+		schedule.Status = false
+		s.db.Save(schedule)
 
+	}
 	return schedule, nil
 }
 
 func updateStory(limit int, schedule *model.Schedule, p *model.Project, wp *worker.Pool) {
 	d := 3 * time.Hour
 	// 保护
-	if schedule.Interval >= 1*time.Hour {
+	if schedule.Interval >= 1*time.Hour && schedule.Interval <= 24*time.Hour {
 		d = schedule.Interval
 	}
 
