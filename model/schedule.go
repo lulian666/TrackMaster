@@ -14,6 +14,9 @@ type Schedule struct {
 
 	Name   string `json:"name"`
 	Status bool   `gorm:"default:false" json:"status"`
+
+	// 最后执行时间
+	LastExecuted time.Time `json:"lastExecuted"`
 }
 
 func (s *Schedule) Create(db *gorm.DB) *pkg.Error {
