@@ -13,6 +13,7 @@ import (
 	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 	goredislib "github.com/redis/go-redis/v9"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -119,12 +120,25 @@ func main() {
 		}
 	}()
 
+	go func() {
+		http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("pong"))
+		})
+
+		err := http.ListenAndServe(":8000", nil)
+		if err != nil {
+			log.Fatalln("failed to start http server")
+		}
+		log.Println("starting http server on port 8000")
+	}()
+
 	topic, ok := os.LookupEnv("TOPIC")
 	if !ok {
 		topic = "pikachu-track"
 	}
 
-	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
+	partitionConsumer, err := consumer.ConsumePartition(topic, 1, sarama.OffsetNewest)
 	if err != nil {
 		log.Fatalln("Failed to create partitionConsumer:", err)
 	}
