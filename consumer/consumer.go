@@ -63,7 +63,7 @@ func NewLock(projectID string) *redsync.Mutex {
 	return mutex
 }
 
-func DoJob(msg []byte, wp *worker.Pool) *pkg.Error {
+func DoJob(msg []byte, wp *worker.Pool) {
 	schedule := model.Schedule{}
 	err := json.Unmarshal(msg, &schedule)
 	if err != nil {
@@ -77,12 +77,12 @@ func DoJob(msg []byte, wp *worker.Pool) *pkg.Error {
 		mutex := NewLock(schedule.ProjectID)
 		log.Println("获取锁：", mutex.Name())
 		if err := mutex.Lock(); err != nil {
-			return pkg.NewError(pkg.ServerError, err.Error()).WithDetails("获取锁失败")
+			wp.Errors <- pkg.NewError(pkg.ServerError, err.Error()).WithDetails("获取锁失败")
 		}
 
 		defer func() {
 			if ok, err := mutex.Unlock(); !ok || err != nil {
-				panic("unlock failed")
+				panic("unlock failed: " + err.Error())
 			}
 			log.Println("释放锁：", mutex.Name())
 		}()
@@ -103,9 +103,9 @@ func DoJob(msg []byte, wp *worker.Pool) *pkg.Error {
 		}
 		wp.Jobs <- &job
 	} else {
+		log.Println("未到执行周期，放弃任务")
 		_ = slack.SendMessage("未到执行周期，放弃任务")
 	}
-	return nil
 }
 
 func main() {
@@ -138,7 +138,12 @@ func main() {
 		topic = "pikachu-track"
 	}
 
-	partitionConsumer, err := consumer.ConsumePartition(topic, 1, sarama.OffsetNewest)
+	partitionConsumer1, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
+	if err != nil {
+		log.Fatalln("Failed to create partitionConsumer:", err)
+	}
+
+	partitionConsumer2, err := consumer.ConsumePartition(topic, 1, sarama.OffsetNewest)
 	if err != nil {
 		log.Fatalln("Failed to create partitionConsumer:", err)
 	}
@@ -152,13 +157,17 @@ func main() {
 
 	for {
 		select {
-		case msg := <-partitionConsumer.Messages():
+		case msg := <-partitionConsumer1.Messages():
 			log.Println("Received: ", string(msg.Value))
 			_ = slack.SendMessage("Received message: " + string(msg.Value))
-			err := DoJob(msg.Value, wp)
-			wp.Errors <- err
+			DoJob(msg.Value, wp)
 
-		case err := <-partitionConsumer.Errors():
+		case msg := <-partitionConsumer2.Messages():
+			log.Println("Received: ", string(msg.Value))
+			_ = slack.SendMessage("Received message: " + string(msg.Value))
+			DoJob(msg.Value, wp)
+
+		case err := <-partitionConsumer1.Errors():
 			log.Println("Error: ", err.Error())
 			_ = slack.SendMessage("Received Error: " + err.Error())
 
