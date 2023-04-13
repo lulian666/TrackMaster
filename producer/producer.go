@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/Shopify/sarama"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -54,6 +55,19 @@ func main() {
 		if err := producer.Close(); err != nil {
 			log.Fatalln("Failed to close producer:", err)
 		}
+	}()
+
+	go func() {
+		http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("pong"))
+		})
+
+		err := http.ListenAndServe(":8000", nil)
+		if err != nil {
+			log.Fatalln("failed to start http server")
+		}
+		log.Println("starting http server on port 8000")
 	}()
 
 	topic, ok := os.LookupEnv("TOPIC")
