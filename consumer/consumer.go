@@ -89,7 +89,7 @@ func DoJob(msg []byte, wp *worker.Pool) {
 
 		_ = slack.SendMessage("开始执行任务...")
 		// 先把schedule的最后执行时间修改了
-		schedule.LastExecuted = time.Now()
+		schedule.LastExecuted = time.Now().UTC()
 		initializer.DB.Save(&schedule)
 
 		project := model.Project{
