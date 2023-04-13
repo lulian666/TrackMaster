@@ -7,6 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -16,11 +17,14 @@ func init() {
 }
 
 func NewProducer() (sarama.SyncProducer, error) {
-	broker, ok := os.LookupEnv("BROKER")
+	brokerAddr, ok := os.LookupEnv("BROKER")
+	var brokerList []string
 	if !ok {
-		broker = "localhost:9092"
+		brokerAddr = "localhost:9092"
+		brokerList = []string{brokerAddr}
+	} else {
+		brokerList = strings.Split(brokerAddr, ",")
 	}
-	brokerList := []string{broker}
 
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -54,7 +58,7 @@ func main() {
 
 	topic, ok := os.LookupEnv("TOPIC")
 	if !ok {
-		topic = "pikachu.track"
+		topic = "pikachu-track"
 	}
 
 	ticker := time.Tick(5 * time.Minute)

@@ -15,6 +15,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
@@ -24,11 +25,14 @@ func init() {
 }
 
 func NewConsumer() (sarama.Consumer, error) {
-	broker, ok := os.LookupEnv("BROKER")
+	brokerAddr, ok := os.LookupEnv("BROKER")
+	var brokerList []string
 	if !ok {
-		broker = "localhost:9092"
+		brokerAddr = "localhost:9092"
+		brokerList = []string{brokerAddr}
+	} else {
+		brokerList = strings.Split(brokerAddr, ",")
 	}
-	brokerList := []string{broker}
 
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
@@ -58,12 +62,12 @@ func NewLock(projectID string) *redsync.Mutex {
 	return mutex
 }
 
-func DoJob(msg []byte, wp *worker.Pool) {
+func DoJob(msg []byte, wp *worker.Pool) *pkg.Error {
 	schedule := model.Schedule{}
 	err := json.Unmarshal(msg, &schedule)
 	if err != nil {
 		wp.Errors <- pkg.NewError(pkg.ServerError, err.Error()).WithDetails("发生在unmarshal msg时")
-		return
+
 	}
 
 	// 判断schedule的最后执行时间，比interval大才会执行
@@ -72,7 +76,7 @@ func DoJob(msg []byte, wp *worker.Pool) {
 		mutex := NewLock(schedule.ProjectID)
 		log.Println("获取锁：", mutex.Name())
 		if err := mutex.Lock(); err != nil {
-			return
+			return pkg.NewError(pkg.ServerError, err.Error()).WithDetails("获取锁失败")
 		}
 
 		defer func() {
@@ -100,6 +104,7 @@ func DoJob(msg []byte, wp *worker.Pool) {
 	} else {
 		_ = slack.SendMessage("未到执行周期，放弃任务")
 	}
+	return nil
 }
 
 func main() {
@@ -116,7 +121,7 @@ func main() {
 
 	topic, ok := os.LookupEnv("TOPIC")
 	if !ok {
-		topic = "pikachu.track"
+		topic = "pikachu-track"
 	}
 
 	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
@@ -136,7 +141,8 @@ func main() {
 		case msg := <-partitionConsumer.Messages():
 			log.Println("Received: ", string(msg.Value))
 			_ = slack.SendMessage("Received message: " + string(msg.Value))
-			DoJob(msg.Value, wp)
+			err := DoJob(msg.Value, wp)
+			wp.Errors <- err
 
 		case err := <-partitionConsumer.Errors():
 			log.Println("Error: ", err.Error())
