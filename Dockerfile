@@ -6,4 +6,6 @@ RUN make build
 
 EXPOSE 8000
 
-CMD ["/app/TrackMaster"]
+#CMD ["/app/TrackMaster"]
+
+ENTRYPOINT ./entrypoint.sh
