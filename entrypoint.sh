@@ -3,13 +3,13 @@ ENV=${ENV:-MASTER}
 
 if [ $ENV == "PRODUCER" ]; then
     echo "start producer"
-    exec /app/out/producer
+    exec /app/producer/producer
 fi
 
 
 if [ $ENV == "CONSUMER" ]; then
     echo "start consumer"
-    exec /app/out/consumer
+    exec /app/consumer/consumer
 fi
 
 if [ $ENV == "MASTER" ]; then

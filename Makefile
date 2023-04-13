@@ -5,8 +5,8 @@ go-test:
 
 go-build: go-fmt go-get go-vet go-mod
 	go build -o ./TrackMaster ./main.go
-	go build  -o out ./producer/producer.go
-	go build  -o out ./consumer/consumer.go
+	go build  -o ./Producer ./producer/producer.go
+	go build  -o ./Consumer ./consumer/consumer.go
 
 
 go-fmt:
