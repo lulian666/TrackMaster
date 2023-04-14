@@ -104,7 +104,7 @@ func DoJob(msg []byte, wp *worker.Pool) {
 		wp.Jobs <- &job
 	} else {
 		log.Println("未到执行周期，放弃任务")
-		_ = slack.SendMessage("未到执行周期，放弃任务")
+		//_ = slack.SendMessage("未到执行周期，放弃任务")
 	}
 }
 
@@ -159,15 +159,19 @@ func main() {
 		select {
 		case msg := <-partitionConsumer1.Messages():
 			log.Println("Received: ", string(msg.Value))
-			_ = slack.SendMessage("Received message: " + string(msg.Value))
+			//_ = slack.SendMessage("Received message: " + string(msg.Value))
 			DoJob(msg.Value, wp)
 
 		case msg := <-partitionConsumer2.Messages():
 			log.Println("Received: ", string(msg.Value))
-			_ = slack.SendMessage("Received message: " + string(msg.Value))
+			//_ = slack.SendMessage("Received message: " + string(msg.Value))
 			DoJob(msg.Value, wp)
 
 		case err := <-partitionConsumer1.Errors():
+			log.Println("Error: ", err.Error())
+			_ = slack.SendMessage("Received Error: " + err.Error())
+
+		case err := <-partitionConsumer2.Errors():
 			log.Println("Error: ", err.Error())
 			_ = slack.SendMessage("Received Error: " + err.Error())
 
