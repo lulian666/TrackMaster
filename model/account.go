@@ -9,7 +9,7 @@ import (
 type Account struct {
 	ProjectID   string    `gorm:"index;not null" json:"projectID" binding:"required,max=32"`
 	ID          string    `gorm:"primaryKey" json:"id" binding:"required,max=32"`
-	Description string    `gorm:"not null" json:"description" binding:"required,min=2,max=50"`
+	Description string    `gorm:"not null;type:varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" json:"description" binding:"required,min=2,max=50"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }

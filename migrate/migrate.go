@@ -17,10 +17,10 @@ func main() {
 	//	log.Fatal("Error migrating database")
 	//}
 	//
-	//err := initializer.DB.AutoMigrate(&model.Account{})
-	//if err != nil {
-	//	log.Fatal("Error migrating database")
-	//}
+	err := initializer.DB.AutoMigrate(&model.Account{})
+	if err != nil {
+		log.Fatal("Error migrating database")
+	}
 	//
 	//err = initializer.DB.AutoMigrate(&model.EnumValue{})
 	//if err != nil {
@@ -91,10 +91,10 @@ func main() {
 	//	log.Fatal("Error migrating database")
 	//}
 
-	err := initializer.DB.AutoMigrate(&model.Schedule{})
-	if err != nil {
-		log.Fatal("Error migrating database")
-	}
+	//err := initializer.DB.AutoMigrate(&model.Schedule{})
+	//if err != nil {
+	//	log.Fatal("Error migrating database")
+	//}
 
 	log.Println("Migration successful")
 }
