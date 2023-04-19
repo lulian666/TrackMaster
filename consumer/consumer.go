@@ -87,7 +87,7 @@ func DoJob(msg []byte, wp *worker.Pool) {
 			log.Println("释放锁：", mutex.Name())
 		}()
 
-		_ = slack.SendMessage("开始执行任务...")
+		//_ = slack.SendMessage("开始执行任务...")
 		// 先把schedule的最后执行时间修改了
 		schedule.LastExecuted = time.Now().UTC()
 		initializer.DB.Save(&schedule)
