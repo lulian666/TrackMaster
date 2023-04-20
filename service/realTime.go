@@ -342,16 +342,16 @@ func eventsLegitimate(db *gorm.DB, ids []string) ([]string, []string, *pkg.Error
 		return nil, nil, pkg.NewError(pkg.ServerError, err.Error()), nil
 	}
 
-	eventNames := make([]string, len(events))
+	eventNames := make([]string, 0, len(events))
 	for _, event := range events {
 		eventNames = append(eventNames, event.Name)
 	}
-
-	if hasDuplicates(eventNames) {
-		return nil, nil, pkg.NewError(pkg.BadRequest, "不能传入名字是一样的event"), nil
+	fmt.Println(eventNames)
+	if str, ok := hasDuplicates(eventNames); ok {
+		return nil, nil, pkg.NewError(pkg.BadRequest, fmt.Sprintf("有两个名字都为【%s】的events", str)), nil
 	}
 
-	eventIDs := make([]string, len(events))
+	eventIDs := make([]string, 0, len(events))
 	for _, event := range events {
 		eventIDs = append(eventIDs, event.ID)
 	}
@@ -412,13 +412,14 @@ func checkLog(limit int, r model.Record, wp *worker.Pool) {
 	}
 }
 
-func hasDuplicates(strs []string) bool {
+func hasDuplicates(strs []string) (string, bool) {
 	set := make(map[string]bool)
 	for _, str := range strs {
+		fmt.Println(str)
 		if set[str] {
-			return true
+			return str, true
 		}
 		set[str] = true
 	}
-	return false
+	return "", false
 }
