@@ -204,7 +204,7 @@ func (h RealTimeHandler) ClearLog(c *gin.Context) {
 // @Produce json
 // @Param record body string true "record ID"
 // @Param fields body model.Fields false "field IDs"
-// @Param event body model.Event false "event ID"
+// @Param event body string false "event ID"
 // @Success 200 {object} object "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"

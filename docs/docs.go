@@ -552,7 +552,7 @@ const docTemplate = `{
                         "name": "event",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/model.Event"
+                            "type": "string"
                         }
                     }
                 ],

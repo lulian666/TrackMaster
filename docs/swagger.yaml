@@ -724,7 +724,7 @@ paths:
         in: body
         name: event
         schema:
-          $ref: '#/definitions/model.Event'
+          type: string
       produces:
       - application/json
       responses:
