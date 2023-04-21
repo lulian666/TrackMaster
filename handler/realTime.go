@@ -218,7 +218,7 @@ func (h RealTimeHandler) UpdateResult(c *gin.Context) {
 		return
 	}
 
-	if req.Fields == nil && req.Event.ID == "" {
+	if req.Fields == nil && req.EventID == "" {
 		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "events或fields至少传一个"))
 		return
 	}

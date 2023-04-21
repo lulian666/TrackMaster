@@ -17,5 +17,5 @@ type Update struct {
 type UpdateResult struct {
 	RecordID string        `json:"record" binding:"required"`
 	Fields   []model.Field `json:"fields"`
-	Event    model.Event   `json:"event"`
+	EventID  string        `json:"event"`
 }

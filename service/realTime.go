@@ -229,20 +229,25 @@ func (s realTimeService) UpdateResult(req request.UpdateResult) *pkg.Error {
 		}
 	}
 
-	if req.Event.ID != "" {
-		s.db.Model(model.Event{}).First(&req.Event)
-		fmt.Println("req.Events", req.Event)
+	if req.EventID != "" {
+		event := model.Event{
+			ID: req.EventID,
+		}
+		result := s.db.Model(model.Event{}).First(&event)
+		if result.Error != nil {
+			return pkg.NewError(pkg.ServerError, result.Error.Error())
+		}
+
 		var fields []model.Field
-		s.db.Model(model.Field{}).Where("event_id = ?", req.Event.ID).Find(&fields)
+		s.db.Model(model.Field{}).Where("event_id = ?", event.ID).Find(&fields)
 
 		fieldIDs, err := model.Fields(fields).ListFieldID()
 		if err != nil {
 			return err
 		}
-		fmt.Println(fieldIDs)
+
 		// 暂时变成直接重置，后续有需要的话再改
-		result := s.db.Exec("update field_results set ios = ?, android = ?, other = ? where field_id  IN (?) and record_id = ?", model.UNTESTED, model.UNTESTED, model.UNTESTED, fieldIDs, r.ID)
-		fmt.Println(result.RowsAffected)
+		result = s.db.Exec("update field_results set ios = ?, android = ?, other = ? where field_id  IN (?) and record_id = ?", model.UNTESTED, model.UNTESTED, model.UNTESTED, fieldIDs, r.ID)
 		if result.Error != nil {
 			return pkg.NewError(pkg.ServerError, result.Error.Error()).WithDetails("更新event下的field result时出错")
 		}
