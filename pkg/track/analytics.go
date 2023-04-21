@@ -284,7 +284,7 @@ func enumFieldCheck(field model.Field, sep string, fieldLog model.FieldLog) bool
 	var allFieldLogs []string
 	initializer.DB.Model(model.FieldLog{}).
 		Where("platform = ? AND field_id = ? AND `key` = ?", fieldLog.Platform, fieldLog.FieldID, fieldLog.Key).
-		Pluck("value", &allFieldLogs)
+		Distinct().Pluck("value", &allFieldLogs)
 	return stringArrayEqual(values, allFieldLogs)
 }
 
