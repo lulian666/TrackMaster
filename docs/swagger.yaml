@@ -668,10 +668,11 @@ paths:
     post:
       parameters:
       - description: record ID
-        in: query
+        in: body
         name: record
         required: true
-        type: string
+        schema:
+          type: string
       - description: account IDs
         in: body
         name: accounts
@@ -715,11 +716,15 @@ paths:
       - description: field IDs
         in: body
         name: fields
-        required: true
         schema:
           items:
             $ref: '#/definitions/model.Field'
           type: array
+      - description: event ID
+        in: body
+        name: event
+        schema:
+          $ref: '#/definitions/model.Event'
       produces:
       - application/json
       responses:

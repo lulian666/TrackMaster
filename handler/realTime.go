@@ -103,7 +103,7 @@ func (h RealTimeHandler) Stop(c *gin.Context) {
 // @Tags realTime
 // @Summery update record
 // @Produce json
-// @Param record query string true "record ID"
+// @Param record body string true "record ID"
 // @Param accounts body []string false "account IDs"
 // @Param events body []string false "event IDs"
 // @Success 200 {object} model.Record "成功"
@@ -112,11 +112,11 @@ func (h RealTimeHandler) Stop(c *gin.Context) {
 // @Router /api/v2/realTime/update [post]
 func (h RealTimeHandler) Update(c *gin.Context) {
 	res := pkg.NewResponse(c)
-	recordID := c.Query("record")
-	if recordID == "" {
-		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "record required in query"))
-		return
-	}
+	//recordID := c.Query("record")
+	//if recordID == "" {
+	//	res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "record required in query"))
+	//	return
+	//}
 
 	req := request.Update{}
 	err := c.ShouldBind(&req)
@@ -126,7 +126,7 @@ func (h RealTimeHandler) Update(c *gin.Context) {
 	}
 
 	r := model.Record{
-		ID: recordID,
+		ID: req.RecordID,
 	}
 	err1 := h.service.Update(&r, req)
 	if err1 != nil {
@@ -203,7 +203,8 @@ func (h RealTimeHandler) ClearLog(c *gin.Context) {
 // @Summery reset test result in record
 // @Produce json
 // @Param record body string true "record ID"
-// @Param fields body model.Fields true "field IDs"
+// @Param fields body model.Fields false "field IDs"
+// @Param event body model.Event false "event ID"
 // @Success 200 {object} object "成功"
 // @Failure 400 {object} pkg.Error "请求错误"
 // @Failure 500 {object} pkg.Error "内部错误"
@@ -217,6 +218,10 @@ func (h RealTimeHandler) UpdateResult(c *gin.Context) {
 		return
 	}
 
+	if req.Fields == nil && req.Event.ID == "" {
+		res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "events或fields至少传一个"))
+		return
+	}
 	err1 := h.service.UpdateResult(req)
 	if err1 != nil {
 		res.ToErrorResponse(err1)

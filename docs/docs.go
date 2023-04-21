@@ -465,11 +465,13 @@ const docTemplate = `{
                 ],
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "record ID",
                         "name": "record",
-                        "in": "query",
-                        "required": true
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     {
                         "description": "account IDs",
@@ -538,12 +540,19 @@ const docTemplate = `{
                         "description": "field IDs",
                         "name": "fields",
                         "in": "body",
-                        "required": true,
                         "schema": {
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/model.Field"
                             }
+                        }
+                    },
+                    {
+                        "description": "event ID",
+                        "name": "event",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/model.Event"
                         }
                     }
                 ],

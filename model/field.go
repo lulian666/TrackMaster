@@ -44,3 +44,11 @@ func (fs Fields) FindByID(id string) (Field, bool) {
 	}
 	return Field{}, false
 }
+
+func (fs Fields) ListFieldID() ([]string, *pkg.Error) {
+	fieldIDs := make([]string, 0, len(fs))
+	for i := range fs {
+		fieldIDs = append(fieldIDs, fs[i].ID)
+	}
+	return fieldIDs, nil
+}

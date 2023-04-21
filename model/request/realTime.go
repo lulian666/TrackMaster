@@ -9,11 +9,13 @@ type Start struct {
 }
 
 type Update struct {
+	RecordID   string   `json:"record" binding:"required"`
 	AccountIDs []string `json:"accounts" binding:"required"`
 	EventIDs   []string `json:"events" binding:"required"`
 }
 
 type UpdateResult struct {
 	RecordID string        `json:"record" binding:"required"`
-	Fields   []model.Field `json:"fields" binding:"required"`
+	Fields   []model.Field `json:"fields"`
+	Event    model.Event   `json:"event"`
 }
