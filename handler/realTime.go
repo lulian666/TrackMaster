@@ -43,10 +43,11 @@ func (h RealTimeHandler) Start(wp *worker.Pool) func(c *gin.Context) {
 			return
 		}
 
-		if len(req.EventIDs) == 0 {
-			res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个event"))
-			return
-		}
+		// 跟前端商量，允许events为空
+		//if len(req.EventIDs) == 0 {
+		//	res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个event"))
+		//	return
+		//}
 
 		if len(req.AccountIDs) == 0 {
 			res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "至少选择一个account"))
@@ -112,11 +113,6 @@ func (h RealTimeHandler) Stop(c *gin.Context) {
 // @Router /api/v2/realTime/update [post]
 func (h RealTimeHandler) Update(c *gin.Context) {
 	res := pkg.NewResponse(c)
-	//recordID := c.Query("record")
-	//if recordID == "" {
-	//	res.ToErrorResponse(pkg.NewError(pkg.BadRequest, "record required in query"))
-	//	return
-	//}
 
 	req := request.Update{}
 	err := c.ShouldBind(&req)
